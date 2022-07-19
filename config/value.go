@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/apus-run/gaia/v1/encoding/json"
+	"github.com/apus-run/gaia/encoding/json"
 )
 
 var (

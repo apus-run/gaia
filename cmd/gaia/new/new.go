@@ -3,8 +3,8 @@ package new
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/apus-run/gaia/cmd/gaia/v1/new/model"
-	"github.com/apus-run/gaia/cmd/gaia/v1/new/service"
+	"github.com/apus-run/gaia/cmd/gaia/new/model"
+	"github.com/apus-run/gaia/cmd/gaia/new/service"
 )
 
 // Cmd represents the new command.

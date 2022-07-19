@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	testData "github.com/apus-run/gaia/v1/testdata/encoding"
+	testData "github.com/apus-run/gaia/testdata/encoding"
 )
 
 func TestName(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apus-run/gaia/v1/config"
+	"github.com/apus-run/gaia/config"
 	"github.com/fsnotify/fsnotify"
 )
 

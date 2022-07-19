@@ -8,11 +8,11 @@ import (
 	"time"
 
 	// init encoding
-	_ "github.com/apus-run/gaia/v1/encoding/json"
-	_ "github.com/apus-run/gaia/v1/encoding/proto"
-	_ "github.com/apus-run/gaia/v1/encoding/xml"
-	_ "github.com/apus-run/gaia/v1/encoding/yaml"
-	"github.com/apus-run/gaia/v1/log"
+	_ "github.com/apus-run/gaia/encoding/json"
+	_ "github.com/apus-run/gaia/encoding/proto"
+	_ "github.com/apus-run/gaia/encoding/xml"
+	_ "github.com/apus-run/gaia/encoding/yaml"
+	"github.com/apus-run/gaia/log"
 )
 
 var (

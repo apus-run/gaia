@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/apus-run/gaia/v1/config"
+	"github.com/apus-run/gaia/config"
 )
 
 type env struct {

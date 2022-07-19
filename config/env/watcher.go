@@ -3,7 +3,7 @@ package env
 import (
 	"context"
 
-	"github.com/apus-run/gaia/v1/config"
+	"github.com/apus-run/gaia/config"
 )
 
 type watcher struct {

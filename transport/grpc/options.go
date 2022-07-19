@@ -2,12 +2,13 @@ package grpc
 
 import (
 	"crypto/tls"
-	"google.golang.org/grpc"
 	"net"
 	"time"
 
-	"github.com/apus-run/gaia/v1/log"
-	"github.com/apus-run/gaia/v1/middleware"
+	"google.golang.org/grpc"
+
+	"github.com/apus-run/gaia/log"
+	"github.com/apus-run/gaia/middleware"
 )
 
 // ServerOption is gRPC server option.

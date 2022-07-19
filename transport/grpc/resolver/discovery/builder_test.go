@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apus-run/gaia/v1/registry"
+	"github.com/apus-run/gaia/registry"
 	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/serviceconfig"
 )

@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apus-run/gaia/v1/encoding"
+	"github.com/apus-run/gaia/encoding"
 )
 
 func TestReader_Merge(t *testing.T) {

@@ -4,8 +4,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/apus-run/gaia/v1/log"
-	"github.com/apus-run/gaia/v1/middleware"
+	"github.com/apus-run/gaia/log"
+	"github.com/apus-run/gaia/middleware"
 )
 
 // ServerOption is an HTTP server option.

@@ -6,9 +6,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/apus-run/gaia/v1/log"
-	"github.com/apus-run/gaia/v1/pkg/endpoint"
-	"github.com/apus-run/gaia/v1/registry"
+	"github.com/apus-run/gaia/log"
+	"github.com/apus-run/gaia/pkg/endpoint"
+	"github.com/apus-run/gaia/registry"
 
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"

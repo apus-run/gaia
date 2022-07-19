@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/apus-run/gaia/v1/log"
-	"github.com/apus-run/gaia/v1/registry"
-	"github.com/apus-run/gaia/v1/transport"
+	"github.com/apus-run/gaia/log"
+	"github.com/apus-run/gaia/registry"
+	"github.com/apus-run/gaia/transport"
 )
 
 type App interface {

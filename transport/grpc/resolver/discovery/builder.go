@@ -8,7 +8,7 @@ import (
 
 	"google.golang.org/grpc/resolver"
 
-	"github.com/apus-run/gaia/v1/registry"
+	"github.com/apus-run/gaia/registry"
 )
 
 const name = "discovery"

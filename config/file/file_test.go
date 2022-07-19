@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apus-run/gaia/v1/config"
+	"github.com/apus-run/gaia/config"
 )
 
 const (

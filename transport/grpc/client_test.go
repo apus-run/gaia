@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	"github.com/apus-run/gaia/v1/middleware"
+	"github.com/apus-run/gaia/middleware"
 )
 
 func EmptyMiddleware() middleware.Middleware {

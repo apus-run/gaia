@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/apus-run/gaia/cmd/gaia/v1/new"
-	"github.com/apus-run/gaia/cmd/gaia/v1/rpc"
-	"github.com/apus-run/gaia/cmd/gaia/v1/run"
-	"github.com/apus-run/gaia/cmd/gaia/v1/upgrade"
+	"github.com/apus-run/gaia/cmd/gaia/new"
+	"github.com/apus-run/gaia/cmd/gaia/rpc"
+	"github.com/apus-run/gaia/cmd/gaia/run"
+	"github.com/apus-run/gaia/cmd/gaia/upgrade"
 )
 
 var Cmd = &cobra.Command{

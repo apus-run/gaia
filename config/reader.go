@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/apus-run/gaia/v1/log"
+	"github.com/apus-run/gaia/log"
 
 	"github.com/imdario/mergo"
 	"google.golang.org/protobuf/encoding/protojson"

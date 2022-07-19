@@ -3,7 +3,7 @@ package xml
 import (
 	"encoding/xml"
 
-	"github.com/apus-run/gaia/v1/encoding"
+	"github.com/apus-run/gaia/encoding"
 )
 
 // Name is the name registered for the xml codec.

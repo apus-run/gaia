@@ -7,9 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/apus-run/gaia/v1/log"
-	"github.com/apus-run/gaia/v1/registry"
-	"github.com/apus-run/gaia/v1/transport"
+	"github.com/apus-run/gaia/log"
+	"github.com/apus-run/gaia/registry"
+	"github.com/apus-run/gaia/transport"
 )
 
 // Option is an application option.

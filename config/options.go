@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/apus-run/gaia/v1/encoding"
-	"github.com/apus-run/gaia/v1/log"
+	"github.com/apus-run/gaia/encoding"
+	"github.com/apus-run/gaia/log"
 )
 
 // Decoder is config decoder.

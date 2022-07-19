@@ -1,4 +1,4 @@
-module github.com/apus-run/gaia/v1
+module github.com/apus-run/gaia
 
 go 1.18
 

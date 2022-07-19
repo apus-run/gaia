@@ -3,7 +3,7 @@ package yaml
 import (
 	"gopkg.in/yaml.v3"
 
-	"github.com/apus-run/gaia/v1/encoding"
+	"github.com/apus-run/gaia/encoding"
 )
 
 // Name is the name registered for the yaml codec.

@@ -1,7 +1,7 @@
 package msgpack
 
 import (
-	"github.com/apus-run/gaia/v1/encoding"
+	"github.com/apus-run/gaia/encoding"
 
 	"github.com/vmihailenco/msgpack/v5"
 )

@@ -5,7 +5,7 @@ package proto
 import (
 	"google.golang.org/protobuf/proto"
 
-	"github.com/apus-run/gaia/v1/encoding"
+	"github.com/apus-run/gaia/encoding"
 )
 
 // Name is the name registered for the proto compressor.

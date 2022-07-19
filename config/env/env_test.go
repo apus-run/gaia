@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apus-run/gaia/v1/config"
-	"github.com/apus-run/gaia/v1/config/file"
+	"github.com/apus-run/gaia/config"
+	"github.com/apus-run/gaia/config/file"
 )
 
 const _testJSON = `

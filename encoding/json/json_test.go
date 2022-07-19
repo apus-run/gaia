@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	testData "github.com/apus-run/gaia/v1/testdata/encoding"
+	testData "github.com/apus-run/gaia/testdata/encoding"
 )
 
 type testEmbed struct {
