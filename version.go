@@ -3,5 +3,5 @@ package gaia
 // Name and Version info of this framework, used for statistics and debug
 const (
 	Name    = "Gaia"
-	Version = "v1.2.2"
+	Version = "v1.3.0"
 )
