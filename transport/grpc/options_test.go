@@ -3,15 +3,14 @@ package grpc
 import (
 	"context"
 	"crypto/tls"
-	"github.com/apus-run/gaia/registry"
 	"net"
 	"reflect"
 	"testing"
 	"time"
 
-	"google.golang.org/grpc"
-
 	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/registry"
+	"google.golang.org/grpc"
 )
 
 func TestNetwork(t *testing.T) {
