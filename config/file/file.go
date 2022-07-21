@@ -11,8 +11,8 @@ type File struct {
 	path string
 }
 
-// NewFile new a file source.
-func NewFile(path string) *File {
+// NewSource new a file source.
+func NewSource(path string) *File {
 	return &File{path: path}
 }
 
@@ -22,11 +22,7 @@ func (f *File) loadFile(path string) (string, error) {
 		return "", err
 	}
 
-	defer func() {
-		if err := file.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer file.Close()
 
 	info, err := file.Stat()
 	if err != nil {

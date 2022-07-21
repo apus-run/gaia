@@ -2,48 +2,39 @@ package config
 
 import (
 	"testing"
-
-	"github.com/apus-run/gaia/config/file"
 )
 
-func TestConfig(t *testing.T) {
-	c := New(WithSource(
-		file.NewFile("../../config/"),
-		// file.NewFile("../../config/sea.yaml"),
-		// file.NewFile("../../"),
-	))
-
-	testConfig(t, c)
+// AppConfig app config
+type AppConfig struct {
+	App struct {
+		Mode string
+		Host string
+		Port int
+	}
 }
 
-func testConfig(t *testing.T, c Config) {
-	if err := c.Load(); err != nil {
+func TestConfig(t *testing.T) {
+	err := Load("../testdata/config/")
+	// err := Load("../testdata/config/app.json")
+	if err != nil {
 		t.Error(err)
 	}
-	d, _ := Sub("database")
-	dsn := d.GetString("dsn")
-	t.Logf("mode: %s", dsn)
+
+	testConfig(t)
+}
+
+func testConfig(t *testing.T) {
 	mode := Get("app.mode")
 	t.Logf("mode: %s", mode)
-	mode2 := File("sea").Get("app.mode")
+	mode2 := File("gaia").Get("app.mode")
 	t.Logf("mode2: %s", mode2)
 
-	addr := File("test").GetInt("http.addr")
+	addr := File("app").GetInt("http.addr")
 	t.Logf("http: %d", addr)
 
-	// AppConfig app config
-	type AppConfig struct {
-		App struct {
-			Mode  string
-			Grace bool
-			Host  string
-			Port  int
-		}
-	}
-
 	var appConfig AppConfig
-	sea := File("sea")
-	err := sea.viper.Unmarshal(&appConfig)
+	sea := File("gaia")
+	err := sea.Unmarshal(&appConfig)
 	if err != nil {
 		t.Errorf("error: %d", err)
 	}

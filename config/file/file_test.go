@@ -28,7 +28,7 @@ func TestFile(t *testing.T) {
 
 func testSource(t *testing.T, path string) {
 	t.Log(path)
-	s := NewFile(path)
+	s := NewSource(path)
 	ss, err := s.Load()
 	if err != nil {
 		t.Error(err)

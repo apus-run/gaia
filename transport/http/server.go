@@ -33,7 +33,6 @@ type Server struct {
 	writeTimeout time.Duration
 	endpoint     *url.URL
 	ms           []middleware.Middleware
-	filters      []FilterFunc
 	err          error
 
 	log *log.Helper
