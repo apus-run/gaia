@@ -9,6 +9,7 @@ import (
 
 	"github.com/apus-run/gaia/log"
 	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/registry"
 )
 
 // ServerOption is gRPC server option.
@@ -42,8 +43,8 @@ func Middleware(m ...middleware.Middleware) ServerOption {
 	}
 }
 
-// TLSConf with TLS config.
-func TLSConf(c *tls.Config) ServerOption {
+// TLSConfig with TLS config.
+func TLSConfig(c *tls.Config) ServerOption {
 	return func(s *Server) {
 		s.tlsConf = c
 	}
@@ -133,5 +134,12 @@ func WithLogger(logger log.Logger) ClientOption {
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(c *Client) {
 		c.timeout = timeout
+	}
+}
+
+// WithDiscovery with client discovery.
+func WithDiscovery(d registry.Discovery) ClientOption {
+	return func(o *Client) {
+		o.discovery = d
 	}
 }

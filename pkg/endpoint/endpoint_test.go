@@ -52,14 +52,14 @@ func TestNewEndpoint(t *testing.T) {
 		want *url.URL
 	}{
 		{
-			name: "https://github.com/go-kratos/kratos/",
-			args: args{"https", "github.com/go-kratos/kratos/"},
-			want: &url.URL{Scheme: "https", Host: "github.com/go-kratos/kratos/"},
+			name: "https://github.com/apus-run/gaia/",
+			args: args{"https", "https://github.com/apus-run/gaia/"},
+			want: &url.URL{Scheme: "https", Host: "https://github.com/apus-run/gaia/"},
 		},
 		{
-			name: "https://go-kratos.dev/",
-			args: args{"https", "go-kratos.dev/"},
-			want: &url.URL{Scheme: "https", Host: "go-kratos.dev/"},
+			name: "https://apus.run/",
+			args: args{"https", "apus.run/"},
+			want: &url.URL{Scheme: "https", Host: "apus.run/"},
 		},
 		{
 			name: "https://www.google.com/",
@@ -88,14 +88,14 @@ func TestParseEndpoint(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "kratos",
-			args:    args{endpoints: []string{"https://github.com/go-kratos/kratos"}, scheme: "https"},
+			name:    "gaia",
+			args:    args{endpoints: []string{"https://github.com/apus-run/gaia/"}, scheme: "https"},
 			want:    "github.com",
 			wantErr: false,
 		},
 		{
 			name:    "test",
-			args:    args{endpoints: []string{"http://go-kratos.dev/"}, scheme: "https"},
+			args:    args{endpoints: []string{"http://apus.run/"}, scheme: "https"},
 			want:    "",
 			wantErr: false,
 		},
@@ -179,8 +179,8 @@ func TestLegacyURLToNew(t *testing.T) {
 			want: &url.URL{Scheme: "https", Host: "www.google.com", RawQuery: "isSecure=true"},
 		},
 		{
-			url:  &url.URL{Scheme: "http", Host: "go-kratos.dev", RawQuery: "isSecure=false"},
-			want: &url.URL{Scheme: "http", Host: "go-kratos.dev", RawQuery: "isSecure=false"},
+			url:  &url.URL{Scheme: "http", Host: "apus.run", RawQuery: "isSecure=false"},
+			want: &url.URL{Scheme: "http", Host: "apus.run", RawQuery: "isSecure=false"},
 		},
 	}
 	for _, tt := range tests {

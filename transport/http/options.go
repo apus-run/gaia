@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"net"
 	"time"
 
@@ -57,5 +58,12 @@ func Listener(lis net.Listener) ServerOption {
 func Logger(logger log.Logger) ServerOption {
 	return func(s *Server) {
 		s.log = log.NewHelper(logger)
+	}
+}
+
+// TLSConfig with TLS config.
+func TLSConfig(c *tls.Config) ServerOption {
+	return func(o *Server) {
+		o.tlsConf = c
 	}
 }

@@ -61,7 +61,6 @@ func NewServer(opts ...ServerOption) *Server {
 
 	// NOTE: must set server
 	srv.Server = &http.Server{
-		// Handler:      FilterChain(srv.filters...)(srv),\
 		Handler:      srv,
 		ReadTimeout:  srv.readTimeout,
 		WriteTimeout: srv.writeTimeout,
