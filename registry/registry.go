@@ -13,7 +13,7 @@ type Registry interface {
 // Discovery is service discovery.
 type Discovery interface {
 	GetService(ctx context.Context, serviceName string) ([]*ServiceInstance, error)
-	ListServices(ctx context.Context) ([]*ServiceInstance, error)
+	GetServiceList(ctx context.Context) ([]*ServiceInstance, error)
 	Watch(ctx context.Context, serviceName string) (Watcher, error)
 }
 

@@ -38,7 +38,7 @@ func TestDisableDebugLog(t *testing.T) {
 
 type mockDiscovery struct{}
 
-func (m *mockDiscovery) ListServices(ctx context.Context) ([]*registry.ServiceInstance, error) {
+func (m *mockDiscovery) GetServiceList(ctx context.Context) ([]*registry.ServiceInstance, error) {
 	return nil, nil
 }
 

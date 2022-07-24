@@ -175,7 +175,7 @@ func TestWithOptions(t *testing.T) {
 
 type mockRegistry struct{}
 
-func (m *mockRegistry) ListServices(ctx context.Context) ([]*registry.ServiceInstance, error) {
+func (m *mockRegistry) GetServiceList(ctx context.Context) ([]*registry.ServiceInstance, error) {
 	return nil, nil
 }
 

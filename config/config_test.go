@@ -33,8 +33,8 @@ func testConfig(t *testing.T) {
 	t.Logf("http: %d", addr)
 
 	var appConfig AppConfig
-	sea := File("gaia")
-	err := sea.Unmarshal(&appConfig)
+	gaia := File("gaia")
+	err := gaia.Unmarshal(&appConfig)
 	if err != nil {
 		t.Errorf("error: %d", err)
 	}
