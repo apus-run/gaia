@@ -14,7 +14,7 @@ type AppConfig struct {
 }
 
 func TestConfig(t *testing.T) {
-	err := Load("../testdata/config/")
+	err := Load("../../testdata/config/")
 	// err := Load("../testdata/config/app.json")
 	if err != nil {
 		t.Error(err)

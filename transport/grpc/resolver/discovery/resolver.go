@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/apus-run/gaia/internal/endpoint"
 	"github.com/apus-run/gaia/log"
-	"github.com/apus-run/gaia/pkg/endpoint"
 	"github.com/apus-run/gaia/registry"
 
 	"google.golang.org/grpc/attributes"

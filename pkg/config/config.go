@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apus-run/gaia/config/file"
+	"github.com/apus-run/gaia/pkg/config/file"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )

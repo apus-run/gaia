@@ -12,10 +12,10 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/apus-run/gaia/internal/endpoint"
+	"github.com/apus-run/gaia/internal/host"
 	"github.com/apus-run/gaia/log"
 	"github.com/apus-run/gaia/middleware"
-	"github.com/apus-run/gaia/pkg/endpoint"
-	"github.com/apus-run/gaia/pkg/host"
 	"github.com/apus-run/gaia/transport"
 )
 

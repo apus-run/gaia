@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/grpc"
 
+	ic "github.com/apus-run/gaia/internal/context"
 	"github.com/apus-run/gaia/middleware"
-	ic "github.com/apus-run/gaia/pkg/context"
 )
 
 // wrappedStream is rewrite grpc stream's context

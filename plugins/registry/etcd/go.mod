@@ -3,7 +3,7 @@ module github.com/apus-run/gaia/plugins/registry/etcd
 go 1.18
 
 require (
-	github.com/apus-run/gaia v1.6.1
+	github.com/apus-run/gaia v1.7.0
 	go.etcd.io/etcd/client/v3 v3.5.4
 	google.golang.org/grpc v1.48.0
 )
