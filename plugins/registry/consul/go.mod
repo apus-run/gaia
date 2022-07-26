@@ -3,7 +3,7 @@ module github.com/apus-run/gaia/plugins/registry/consul
 go 1.18
 
 require (
-	github.com/apus-run/gaia v1.6.0
+	github.com/apus-run/gaia v1.6.1
 	github.com/hashicorp/consul/api v1.13.1
 )
 
