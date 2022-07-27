@@ -77,6 +77,7 @@ func (c *Context) JSONOK(data interface{}) {
 	j := new(Response)
 	j.Code = CodeOK
 	j.Msg = "ok"
+
 	if data == nil {
 		j.Data = gin.H{}
 	} else {
@@ -87,13 +88,14 @@ func (c *Context) JSONOK(data interface{}) {
 }
 
 func (c *Context) Success(data interface{}) {
+	j := new(Response)
+	j.Code = errcode.Success.Code()
+	j.Msg = errcode.Success.Msg()
+
 	if data == nil {
-		data = gin.H{}
-	}
-	j := &Response{
-		Code: errcode.Success.Code(),
-		Msg:  errcode.Success.Msg(),
-		Data: nil,
+		j.Data = gin.H{}
+	} else {
+		j.Data = data
 	}
 
 	c.Context.JSON(http.StatusOK, j)
