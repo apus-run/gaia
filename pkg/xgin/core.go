@@ -1,6 +1,7 @@
 package xgin
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/apus-run/gaia/pkg/errcode"
@@ -28,6 +29,19 @@ func Handle(h HandlerFunc) gin.HandlerFunc {
 		}
 		h(ctx)
 	}
+}
+
+type ginKey struct{}
+
+// NewGinContext returns a new Context that carries gin.Context value.
+func NewGinContext(ctx context.Context, c *gin.Context) context.Context {
+	return context.WithValue(ctx, ginKey{}, c)
+}
+
+// FromGinContext returns the gin.Context value stored in ctx, if any.
+func FromGinContext(ctx context.Context) (c *gin.Context, ok bool) {
+	c, ok = ctx.Value(ginKey{}).(*gin.Context)
+	return
 }
 
 const (
