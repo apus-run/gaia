@@ -16,7 +16,7 @@ type {{ $.InterfaceName }} interface {
 {{- end}}
 }
 func Register{{ $.InterfaceName }}(r gin.IRouter, srv {{ $.InterfaceName }}) {
-	s := {{.Name}}{
+	s := &{{.Name}}{
 		server: srv,
 		router: r,
 	}
