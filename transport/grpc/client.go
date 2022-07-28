@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/apus-run/gaia/registry"
-	"github.com/apus-run/gaia/transport/grpc/resolver/discovery"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/credentials"
@@ -15,6 +13,8 @@ import (
 
 	"github.com/apus-run/gaia/log"
 	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/registry"
+	"github.com/apus-run/gaia/transport/grpc/resolver/discovery"
 )
 
 // Client is gRPC Client

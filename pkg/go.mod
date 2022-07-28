@@ -3,7 +3,7 @@ module github.com/apus-run/gaia/pkg
 go 1.18
 
 require (
-	github.com/apus-run/gaia v1.7.0
+	github.com/apus-run/gaia v1.7.2
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-playground/locales v0.14.0

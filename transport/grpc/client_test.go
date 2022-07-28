@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apus-run/gaia/middleware"
 	"google.golang.org/grpc"
+
+	"github.com/apus-run/gaia/middleware"
 )
 
 func EmptyMiddleware() middleware.Middleware {
