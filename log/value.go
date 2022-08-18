@@ -27,11 +27,15 @@ func Value(ctx context.Context, v interface{}) interface{} {
 	return v
 }
 
-// Caller returns a Valuer that returns a internal/file:line description of the caller.
+// Caller returns a Valuer that returns a pkg/file:line description of the caller.
 func Caller(depth int) Valuer {
 	return func(context.Context) interface{} {
 		_, file, line, _ := runtime.Caller(depth)
 		idx := strings.LastIndexByte(file, '/')
+		if idx == -1 {
+			return file[idx+1:] + ":" + strconv.Itoa(line)
+		}
+		idx = strings.LastIndexByte(file[:idx], '/')
 		return file[idx+1:] + ":" + strconv.Itoa(line)
 	}
 }

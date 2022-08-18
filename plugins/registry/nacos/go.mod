@@ -3,7 +3,7 @@ module github.com/apus-run/gaia/plugins/registry/nacos
 go 1.18
 
 require (
-	github.com/apus-run/gaia v1.7.2
+	github.com/apus-run/gaia v1.7.4
 	github.com/nacos-group/nacos-sdk-go v1.0.9
 )
 
