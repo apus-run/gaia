@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	xlog "github.com/apus-run/gaia/log"
 	"github.com/apus-run/gaia/registry"
+	xlog "github.com/apus-run/sea-kit/log"
 )
 
 func TestID(t *testing.T) {
@@ -89,7 +89,7 @@ func TestNewOptions(t *testing.T) {
 	n := "user-srv"
 	v := "v1.0.0"
 
-	opts := newOptions(WithID(i), WithName(n), WithVersion(v))
+	opts := Apply(WithID(i), WithName(n), WithVersion(v))
 	t.Logf("options: %v \n", opts)
 }
 
@@ -144,4 +144,40 @@ func TestStopTimeout(t *testing.T) {
 	if !reflect.DeepEqual(v, o.stopTimeout) {
 		t.Fatal("o.stopTimeout is not equal to v")
 	}
+}
+
+func TestBeforeStart(t *testing.T) {
+	o := &options{}
+	v := func(_ context.Context) error {
+		t.Log("BeforeStart...")
+		return nil
+	}
+	BeforeStart(v)(o)
+}
+
+func TestBeforeStop(t *testing.T) {
+	o := &options{}
+	v := func(_ context.Context) error {
+		t.Log("BeforeStop...")
+		return nil
+	}
+	BeforeStop(v)(o)
+}
+
+func TestAfterStart(t *testing.T) {
+	o := &options{}
+	v := func(_ context.Context) error {
+		t.Log("AfterStart...")
+		return nil
+	}
+	AfterStart(v)(o)
+}
+
+func TestAfterStop(t *testing.T) {
+	o := &options{}
+	v := func(_ context.Context) error {
+		t.Log("AfterStop...")
+		return nil
+	}
+	AfterStop(v)(o)
 }

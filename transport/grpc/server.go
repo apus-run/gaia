@@ -2,57 +2,26 @@ package grpc
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"net/url"
 
+	"github.com/apus-run/sea-kit/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/apus-run/gaia/internal/endpoint"
 	"github.com/apus-run/gaia/internal/host"
-	"github.com/apus-run/gaia/log"
 	"github.com/apus-run/gaia/middleware"
 	"github.com/apus-run/gaia/transport"
+	"google.golang.org/grpc/admin"
 )
 
 var (
 	_ transport.Server     = (*Server)(nil)
 	_ transport.Endpointer = (*Server)(nil)
 )
-
-// Server is a gRPC server wrapper.
-type Server struct {
-	*grpc.Server
-	ctx               context.Context
-	tlsConf           *tls.Config
-	lis               net.Listener
-	err               error
-	network           string
-	address           string
-	endpoint          *url.URL
-	middleware        []middleware.Middleware
-	unaryInterceptor  []grpc.UnaryServerInterceptor
-	streamInterceptor []grpc.StreamServerInterceptor
-	grpcOpts          []grpc.ServerOption
-	health            *health.Server
-
-	log *log.Helper
-}
-
-// defaultServer return a default config server
-func defaultServer() *Server {
-	return &Server{
-		ctx:     context.Background(),
-		network: "tcp",
-		address: ":0",
-		health:  health.NewServer(),
-		log:     log.NewHelper(log.GetLogger()),
-	}
-}
 
 // NewServer creates a gRPC server by options.
 func NewServer(opts ...ServerOption) *Server {
@@ -78,31 +47,54 @@ func NewServer(opts ...ServerOption) *Server {
 		grpc.ChainStreamInterceptor(streamInterceptor...),
 	}
 	if srv.tlsConf != nil {
-		grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewTLS(srv.tlsConf)))
+		t, err := srv.tlsConf.Config()
+		if err != nil {
+			log.Errorf("TLS Config Error - %v", err)
+		}
+		grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewTLS(t)))
 	}
 	if len(srv.grpcOpts) > 0 {
 		grpcOpts = append(grpcOpts, srv.grpcOpts...)
 	}
 
 	srv.Server = grpc.NewServer(grpcOpts...)
+	// internal register
+	if !srv.customHealth {
+		grpc_health_v1.RegisterHealthServer(srv.Server, srv.health)
+	}
 
 	// listen and endpoint
 	srv.err = srv.listenAndEndpoint()
 
-	// see https://github.com/grpc/grpc/blob/master/doc/health-checking.md
-	grpc_health_v1.RegisterHealthServer(srv.Server, srv.health)
+	if !srv.customHealth {
+		// see https://github.com/grpc/grpc/blob/master/doc/health-checking.md
+		grpc_health_v1.RegisterHealthServer(srv.Server, srv.health)
+	}
 
 	// register reflection and the interface can be debugged through the grpcurl tool
 	// https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md#enable-server-reflection
 	// see https://github.com/fullstorydev/grpcurl
 	reflection.Register(srv.Server)
 
+	// admin register
+	srv.adminClean, _ = admin.Register(srv.Server)
+
 	return srv
+}
+
+// Use uses a service middleware with selector.
+// selector:
+//   - '/*'
+//   - '/helloworld.v1.Greeter/*'
+//   - '/helloworld.v1.Greeter/SayHello'
+func (s *Server) Use(selector string, m ...middleware.Middleware) {
+	s.middleware.Add(selector, m...)
 }
 
 // Endpoint return a real address to registry endpoint.
 // examples:
-//   grpc://127.0.0.1:9000?isSecure=false
+//
+//	grpc://127.0.0.1:9000?isSecure=false
 func (s *Server) Endpoint() (*url.URL, error) {
 	if err := s.listenAndEndpoint(); err != nil {
 		return nil, s.err
@@ -122,17 +114,23 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 // Stop stop the gRPC server.
-func (s *Server) Stop() error {
+func (s *Server) Stop(ctx context.Context) error {
+	if s.adminClean != nil {
+		s.adminClean()
+	}
 	s.health.Shutdown()
 	s.Server.Stop()
-	s.log.Info("[gRPC] server stopping")
+	log.Info("[gRPC] server stopping")
 	return nil
 }
 
 func (s *Server) GracefullyStop(ctx context.Context) error {
+	if s.adminClean != nil {
+		s.adminClean()
+	}
 	s.health.Shutdown()
 	s.Server.GracefulStop()
-	s.log.Info("[gRPC] server graceful stopping")
+	log.Info("[gRPC] server graceful stopping")
 	return nil
 }
 

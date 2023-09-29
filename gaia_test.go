@@ -237,7 +237,7 @@ func TestApp_Context(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &Gaia{
-				opts:     options{id: tt.id, name: tt.name, metadata: tt.metadata, version: tt.version},
+				opts:     &options{id: tt.id, name: tt.name, metadata: tt.metadata, version: tt.version},
 				ctx:      context.Background(),
 				cancel:   nil,
 				instance: tt.instance,

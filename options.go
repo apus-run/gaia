@@ -7,7 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/apus-run/gaia/log"
+	"github.com/apus-run/sea-kit/log"
+	"github.com/google/uuid"
+
 	"github.com/apus-run/gaia/registry"
 	"github.com/apus-run/gaia/transport"
 )
@@ -32,11 +34,17 @@ type options struct {
 	servers         []transport.Server
 
 	logger log.Logger
+
+	// Before and After funcs
+	beforeStart []func(context.Context) error
+	beforeStop  []func(context.Context) error
+	afterStart  []func(context.Context) error
+	afterStop   []func(context.Context) error
 }
 
 // defaultOptions 初始化默认值
-func defaultOptions() options {
-	return options{
+func defaultOptions() *options {
+	return &options{
 		ctx:             context.Background(),
 		sigs:            []os.Signal{syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT},
 		registryTimeout: 10 * time.Second,
@@ -44,15 +52,15 @@ func defaultOptions() options {
 	}
 }
 
-// newOptions returns a new options
-func newOptions(opts ...Option) options {
-	opt := defaultOptions()
-
-	for _, o := range opts {
-		o(&opt)
+func Apply(opts ...Option) *options {
+	o := defaultOptions()
+	if id, err := uuid.NewUUID(); err == nil {
+		o.id = id.String()
 	}
-
-	return opt
+	for _, opt := range opts {
+		opt(o)
+	}
+	return o
 }
 
 // WithID with app id
@@ -136,5 +144,35 @@ func WithRegistryTimeout(t time.Duration) Option {
 func WithStopTimeout(t time.Duration) Option {
 	return func(o *options) {
 		o.stopTimeout = t
+	}
+}
+
+// Before and Afters
+
+// BeforeStart run funcs before app starts
+func BeforeStart(fn func(context.Context) error) Option {
+	return func(o *options) {
+		o.beforeStart = append(o.beforeStart, fn)
+	}
+}
+
+// BeforeStop run funcs before app stops
+func BeforeStop(fn func(context.Context) error) Option {
+	return func(o *options) {
+		o.beforeStop = append(o.beforeStop, fn)
+	}
+}
+
+// AfterStart run funcs after app starts
+func AfterStart(fn func(context.Context) error) Option {
+	return func(o *options) {
+		o.afterStart = append(o.afterStart, fn)
+	}
+}
+
+// AfterStop run funcs after app stops
+func AfterStop(fn func(context.Context) error) Option {
+	return func(o *options) {
+		o.afterStop = append(o.afterStop, fn)
 	}
 }

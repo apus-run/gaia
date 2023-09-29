@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -11,7 +10,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	grpcInsecure "google.golang.org/grpc/credentials/insecure"
 
-	"github.com/apus-run/gaia/log"
+	"github.com/apus-run/gaia/internal/tls"
 	"github.com/apus-run/gaia/middleware"
 	"github.com/apus-run/gaia/registry"
 	"github.com/apus-run/gaia/transport/grpc/resolver/discovery"
@@ -19,24 +18,106 @@ import (
 
 // Client is gRPC Client
 type Client struct {
-	endpoint     string
-	timeout      time.Duration
-	tlsConf      *tls.Config
-	discovery    registry.Discovery
-	ms           []middleware.Middleware
-	ints         []grpc.UnaryClientInterceptor
-	grpcOpts     []grpc.DialOption
-	balancerName string
-
-	log *log.Helper
+	endpoint               string
+	subsetSize             int
+	timeout                time.Duration
+	tlsConf                *tls.Config
+	discovery              registry.Discovery
+	ms                     []middleware.Middleware
+	ints                   []grpc.UnaryClientInterceptor
+	streamInts             []grpc.StreamClientInterceptor
+	grpcOpts               []grpc.DialOption
+	balancerName           string
+	printDiscoveryDebugLog bool
 }
 
 // defaultClient return a default config server
 func defaultClient() *Client {
 	return &Client{
-		timeout:      2000 * time.Millisecond,
-		balancerName: roundrobin.Name,
-		log:          log.NewHelper(log.GetLogger()),
+		timeout:                2000 * time.Millisecond,
+		balancerName:           roundrobin.Name,
+		subsetSize:             25,
+		printDiscoveryDebugLog: true,
+	}
+}
+
+// ClientOption is gRPC client option.
+type ClientOption func(o *Client)
+
+// WithEndpoint ...
+func WithEndpoint(endpoint string) ClientOption {
+	return func(c *Client) {
+		c.endpoint = endpoint
+	}
+}
+
+// WithSubset with client disocvery subset size.
+// zero value means subset filter disabled
+func WithSubset(size int) ClientOption {
+	return func(c *Client) {
+		c.subsetSize = size
+	}
+}
+
+// WithGrpcOptions with gRPC options.
+func WithGrpcOptions(opts ...grpc.DialOption) ClientOption {
+	return func(c *Client) {
+		c.grpcOpts = opts
+	}
+}
+
+// WithMiddleware with client middleware.
+func WithMiddleware(ms ...middleware.Middleware) ClientOption {
+	return func(c *Client) {
+		c.ms = ms
+	}
+}
+
+// WithTLSConfig with TLS config.
+func WithTLSConfig(conf *tls.Config) ClientOption {
+	return func(c *Client) {
+		c.tlsConf = conf
+	}
+}
+
+// WithUnaryInterceptor returns a DialOption that specifies the interceptor for unary RPCs.
+func WithUnaryInterceptor(in ...grpc.UnaryClientInterceptor) ClientOption {
+	return func(c *Client) {
+		c.ints = in
+	}
+}
+
+// WithStreamInterceptor returns a DialOption that specifies the interceptor for streaming RPCs.
+func WithStreamInterceptor(in ...grpc.StreamClientInterceptor) ClientOption {
+	return func(c *Client) {
+		c.streamInts = in
+	}
+}
+
+// WithBalancerName with balancer name
+func WithBalancerName(name string) ClientOption {
+	return func(c *Client) {
+		c.balancerName = name
+	}
+}
+
+// WithTimeout with client timeout.
+func WithTimeout(timeout time.Duration) ClientOption {
+	return func(c *Client) {
+		c.timeout = timeout
+	}
+}
+
+// WithDiscovery with client discovery.
+func WithDiscovery(d registry.Discovery) ClientOption {
+	return func(c *Client) {
+		c.discovery = d
+	}
+}
+
+func WithPrintDiscoveryDebugLog(p bool) ClientOption {
+	return func(c *Client) {
+		c.printDiscoveryDebugLog = p
 	}
 }
 
@@ -51,34 +132,52 @@ func DialInsecure(ctx context.Context, opts ...ClientOption) (*grpc.ClientConn, 
 }
 
 func dial(ctx context.Context, insecure bool, opts ...ClientOption) (*grpc.ClientConn, error) {
-	c := defaultClient()
+	options := defaultClient()
 
 	for _, o := range opts {
-		o(c)
+		o(options)
 	}
 
 	ints := []grpc.UnaryClientInterceptor{
-		c.unaryClientInterceptor(c.ms, c.timeout),
+		options.unaryClientInterceptor(options.ms, options.timeout),
 	}
-	if len(c.ints) > 0 {
-		ints = append(ints, c.ints...)
+	sints := []grpc.StreamClientInterceptor{
+		options.streamClientInterceptor(),
+	}
+	if len(options.ints) > 0 {
+		ints = append(ints, options.ints...)
+	}
+	if len(options.streamInts) > 0 {
+		sints = append(sints, options.streamInts...)
 	}
 	grpcOpts := []grpc.DialOption{
-		grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"loadBalancingConfig": [{"%s":{}}]}`, c.balancerName)),
+		grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"loadBalancingConfig": [{"%s":{}}],"healthCheckConfig":{"serviceName":""}}`, options.balancerName)),
 		grpc.WithChainUnaryInterceptor(ints...),
+		grpc.WithChainStreamInterceptor(sints...),
 	}
-	if c.discovery != nil {
-		grpcOpts = append(grpcOpts, grpc.WithResolvers(discovery.NewBuilder(c.discovery, discovery.WithInsecure(insecure))))
+	if options.discovery != nil {
+		grpcOpts = append(grpcOpts,
+			grpc.WithResolvers(
+				discovery.NewBuilder(
+					options.discovery,
+					discovery.WithInsecure(insecure),
+					discovery.WithSubset(options.subsetSize),
+					discovery.PrintDebugLog(options.printDiscoveryDebugLog),
+				)))
 	}
 	if insecure {
 		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(grpcInsecure.NewCredentials()))
 	}
-	if c.tlsConf != nil {
-		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(c.tlsConf)))
+	if options.tlsConf != nil {
+		t, err := options.tlsConf.Config()
+		if err != nil {
+			return nil, fmt.Errorf("TLS Config Error - %v", err)
+		}
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(t)))
 	}
-	if len(c.grpcOpts) > 0 {
-		grpcOpts = append(grpcOpts, c.grpcOpts...)
+	if len(options.grpcOpts) > 0 {
+		grpcOpts = append(grpcOpts, options.grpcOpts...)
 	}
 
-	return grpc.DialContext(ctx, c.endpoint, grpcOpts...)
+	return grpc.DialContext(ctx, options.endpoint, grpcOpts...)
 }

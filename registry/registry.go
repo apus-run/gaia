@@ -44,3 +44,19 @@ type ServiceInstance struct {
 	//   grpc://127.0.0.1:9000?isSecure=false
 	Endpoints []string `json:"endpoints"`
 }
+
+// NoopRegistry is an empty implement of Registry
+var NoopRegistry Registry = &noopRegistry{}
+
+// NoopRegistry
+type noopRegistry struct{}
+
+// Deregister implements Registry.
+func (*noopRegistry) Deregister(ctx context.Context, svc *ServiceInstance) error {
+	return nil
+}
+
+// Register implements Registry.
+func (*noopRegistry) Register(ctx context.Context, svc *ServiceInstance) error {
+	return nil
+}

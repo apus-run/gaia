@@ -16,7 +16,7 @@ const (
 	contextPackage     = protogen.GoImportPath("context")
 	ginPackage         = protogen.GoImportPath("github.com/gin-gonic/gin")
 	metadataPackage    = protogen.GoImportPath("google.golang.org/grpc/metadata")
-	xginPackage        = protogen.GoImportPath("github.com/apus-run/gaia/pkg/xgin")
+	ginxPackage        = protogen.GoImportPath("github.com/apus-run/gaia/pkg/ginx")
 	errCodePackage     = protogen.GoImportPath("github.com/apus-run/gaia/pkg/errcode")
 	deprecationComment = "// Deprecated: Do not use."
 )
@@ -40,7 +40,7 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) *protogen.Generated
 	g.P()
 	g.P("// ", contextPackage.Ident(""))
 	g.P("// ", metadataPackage.Ident(""))
-	g.P("// ", ginPackage.Ident(""), xginPackage.Ident(""), errCodePackage.Ident(""))
+	g.P("// ", ginPackage.Ident(""), ginxPackage.Ident(""), errCodePackage.Ident(""))
 	g.P()
 
 	for _, service := range file.Services {

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"github.com/apus-run/gaia/transport"
 	"time"
 
 	"google.golang.org/grpc"
@@ -33,13 +34,24 @@ func (s *Server) unaryServerInterceptor() grpc.UnaryServerInterceptor {
 		ctx, cancel := ic.Merge(ctx, s.ctx)
 		defer cancel()
 
-		// md, ok := metadata.FromIncomingContext(ctx)
+		tr := &Transport{
+			operation: info.FullMethod,
+		}
+		if s.endpoint != nil {
+			tr.endpoint = s.endpoint.String()
+		}
+
+		ctx = transport.NewServerContext(ctx, tr)
+		if s.timeout > 0 {
+			ctx, cancel = context.WithTimeout(ctx, s.timeout)
+			defer cancel()
+		}
 
 		h := func(ctx context.Context, req interface{}) (interface{}, error) {
 			return handler(ctx, req)
 		}
-		if len(s.middleware) > 0 {
-			h = middleware.Chain(s.middleware...)(h)
+		if next := s.middleware.Match(tr.Operation()); len(next) > 0 {
+			h = middleware.Chain(next...)(h)
 		}
 
 		reply, err := h(ctx, req)
@@ -54,7 +66,10 @@ func (s *Server) streamServerInterceptor() grpc.StreamServerInterceptor {
 		ctx, cancel := ic.Merge(ss.Context(), s.ctx)
 		defer cancel()
 
-		// md, ok := metadata.FromIncomingContext(ctx)
+		ctx = transport.NewServerContext(ctx, &Transport{
+			endpoint:  s.endpoint.String(),
+			operation: info.FullMethod,
+		})
 
 		ws := NewWrappedStream(ctx, ss)
 
@@ -67,6 +82,11 @@ func (s *Server) streamServerInterceptor() grpc.StreamServerInterceptor {
 // unaryClientInterceptor client unary interceptor
 func (c *Client) unaryClientInterceptor(ms []middleware.Middleware, timeout time.Duration) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		ctx = transport.NewClientContext(ctx, &Transport{
+			endpoint:  cc.Target(),
+			operation: method,
+		})
+
 		if timeout > 0 {
 			var cancel context.CancelFunc
 			ctx, cancel = context.WithTimeout(ctx, timeout)
@@ -84,5 +104,16 @@ func (c *Client) unaryClientInterceptor(ms []middleware.Middleware, timeout time
 		_, err := h(ctx, req)
 
 		return err
+	}
+}
+
+func (c *Client) streamClientInterceptor() grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) { // nolint
+		ctx = transport.NewClientContext(ctx, &Transport{
+			endpoint:  cc.Target(),
+			operation: method,
+		})
+
+		return streamer(ctx, desc, cc, method, opts...)
 	}
 }

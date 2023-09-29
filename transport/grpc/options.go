@@ -1,16 +1,51 @@
 package grpc
 
 import (
-	"crypto/tls"
+	"context"
 	"net"
+	"net/url"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
 
-	"github.com/apus-run/gaia/log"
+	"github.com/apus-run/gaia/internal/matcher"
+	"github.com/apus-run/gaia/internal/tls"
 	"github.com/apus-run/gaia/middleware"
-	"github.com/apus-run/gaia/registry"
 )
+
+// Server is a gRPC server wrapper.
+type Server struct {
+	*grpc.Server
+	ctx               context.Context
+	tlsConf           *tls.Config
+	lis               net.Listener
+	err               error
+	network           string
+	address           string
+	endpoint          *url.URL
+	timeout           time.Duration
+	middleware        matcher.Matcher
+	unaryInterceptor  []grpc.UnaryServerInterceptor
+	streamInterceptor []grpc.StreamServerInterceptor
+	grpcOpts          []grpc.ServerOption
+	health            *health.Server
+
+	customHealth bool
+	adminClean   func()
+}
+
+// defaultServer return a default config server
+func defaultServer() *Server {
+	return &Server{
+		ctx:        context.Background(),
+		network:    "tcp",
+		address:    ":0",
+		timeout:    1 * time.Second,
+		health:     health.NewServer(),
+		middleware: matcher.New(),
+	}
+}
 
 // ServerOption is gRPC server option.
 type ServerOption func(o *Server)
@@ -29,17 +64,24 @@ func Address(addr string) ServerOption {
 	}
 }
 
-// Logger with server logger.
-func Logger(logger log.Logger) ServerOption {
+// Endpoint with server address.
+func Endpoint(endpoint *url.URL) ServerOption {
 	return func(s *Server) {
-		s.log = log.NewHelper(logger)
+		s.endpoint = endpoint
+	}
+}
+
+// Timeout with server timeout.
+func Timeout(timeout time.Duration) ServerOption {
+	return func(s *Server) {
+		s.timeout = timeout
 	}
 }
 
 // Middleware with server middleware.
 func Middleware(m ...middleware.Middleware) ServerOption {
 	return func(s *Server) {
-		s.middleware = m
+		s.middleware.Use(m...)
 	}
 }
 
@@ -75,71 +117,5 @@ func StreamInterceptor(in ...grpc.StreamServerInterceptor) ServerOption {
 func GrpcOptions(opts ...grpc.ServerOption) ServerOption {
 	return func(s *Server) {
 		s.grpcOpts = opts
-	}
-}
-
-// ClientOption is gRPC client option.
-type ClientOption func(o *Client)
-
-// WithEndpoint ...
-func WithEndpoint(endpoint string) ClientOption {
-	return func(c *Client) {
-		c.endpoint = endpoint
-	}
-}
-
-// WithGrpcOptions with gRPC options.
-func WithGrpcOptions(opts ...grpc.DialOption) ClientOption {
-	return func(c *Client) {
-		c.grpcOpts = opts
-	}
-}
-
-// WithMiddleware with client middleware.
-func WithMiddleware(ms ...middleware.Middleware) ClientOption {
-	return func(c *Client) {
-		c.ms = ms
-	}
-}
-
-// WithTLSConfig with TLS config.
-func WithTLSConfig(conf *tls.Config) ClientOption {
-	return func(c *Client) {
-		c.tlsConf = conf
-	}
-}
-
-// WithUnaryInterceptor returns a DialOption that specifies the interceptor for unary RPCs.
-func WithUnaryInterceptor(in ...grpc.UnaryClientInterceptor) ClientOption {
-	return func(c *Client) {
-		c.ints = in
-	}
-}
-
-// WithBalancerName with balancer name
-func WithBalancerName(name string) ClientOption {
-	return func(c *Client) {
-		c.balancerName = name
-	}
-}
-
-// WithLogger with server logger.
-func WithLogger(logger log.Logger) ClientOption {
-	return func(c *Client) {
-		c.log = log.NewHelper(logger)
-	}
-}
-
-// WithTimeout with client timeout.
-func WithTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) {
-		c.timeout = timeout
-	}
-}
-
-// WithDiscovery with client discovery.
-func WithDiscovery(d registry.Discovery) ClientOption {
-	return func(o *Client) {
-		o.discovery = d
 	}
 }

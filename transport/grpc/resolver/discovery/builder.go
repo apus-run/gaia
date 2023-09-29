@@ -33,24 +33,31 @@ func WithInsecure(insecure bool) Option {
 // DisableDebugLog disables update instances log.
 func DisableDebugLog() Option {
 	return func(b *builder) {
-		b.debugLogDisabled = true
+		b.debugLog = false
+	}
+}
+
+// PrintDebugLog print grpc resolver watch service log
+func PrintDebugLog(p bool) Option {
+	return func(b *builder) {
+		b.debugLog = p
 	}
 }
 
 type builder struct {
-	discoverer       registry.Discovery
-	timeout          time.Duration
-	insecure         bool
-	debugLogDisabled bool
+	discoverer registry.Discovery
+	timeout    time.Duration
+	insecure   bool
+	debugLog   bool
 }
 
 // NewBuilder creates a builder which is used to factory registry resolvers.
 func NewBuilder(d registry.Discovery, opts ...Option) resolver.Builder {
 	b := &builder{
-		discoverer:       d,
-		timeout:          time.Second * 10,
-		insecure:         false,
-		debugLogDisabled: false,
+		discoverer: d,
+		timeout:    time.Second * 10,
+		insecure:   false,
+		debugLog:   true,
 	}
 	for _, o := range opts {
 		o(b)
@@ -85,12 +92,12 @@ func (b *builder) Build(target resolver.Target, cc resolver.ClientConn, opts res
 		return nil, err
 	}
 	r := &discoveryResolver{
-		w:                watchRes.w,
-		cc:               cc,
-		ctx:              ctx,
-		cancel:           cancel,
-		insecure:         b.insecure,
-		debugLogDisabled: b.debugLogDisabled,
+		w:        watchRes.w,
+		cc:       cc,
+		ctx:      ctx,
+		cancel:   cancel,
+		insecure: b.insecure,
+		debugLog: b.debugLog,
 	}
 	go r.watch()
 	return r, nil

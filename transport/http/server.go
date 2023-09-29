@@ -2,16 +2,15 @@ package http
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"net"
 	"net/http"
 	"net/url"
-	"time"
+
+	"github.com/apus-run/sea-kit/log"
 
 	"github.com/apus-run/gaia/internal/endpoint"
 	"github.com/apus-run/gaia/internal/host"
-	"github.com/apus-run/gaia/log"
 	"github.com/apus-run/gaia/middleware"
 	"github.com/apus-run/gaia/transport"
 )
@@ -22,34 +21,6 @@ var (
 	_ http.Handler         = (*Server)(nil)
 )
 
-// Server is an HTTP server wrapper.
-type Server struct {
-	*http.Server
-	lis          net.Listener
-	tlsConf      *tls.Config
-	network      string
-	address      string
-	readTimeout  time.Duration
-	writeTimeout time.Duration
-	endpoint     *url.URL
-	ms           []middleware.Middleware
-	err          error
-
-	log *log.Helper
-}
-
-// defaultServer return a default config server
-func defaultServer() *Server {
-	return &Server{
-		network:      "tcp",
-		address:      ":0",
-		readTimeout:  1 * time.Second,
-		writeTimeout: 1 * time.Second,
-
-		log: log.NewHelper(log.GetLogger()),
-	}
-}
-
 // NewServer creates an HTTP server by options.
 func NewServer(opts ...ServerOption) *Server {
 	srv := defaultServer()
@@ -58,14 +29,38 @@ func NewServer(opts ...ServerOption) *Server {
 		o(srv)
 	}
 
-	// NOTE: must set server
+	// TODO: must set server
+	if srv.tlsConf != nil {
+		t, err := srv.tlsConf.Config()
+		if err != nil {
+			log.Errorf("TLS Config Error - %v", err)
+		}
+		if err == nil {
+			srv.Server = &http.Server{
+				Handler:      srv,
+				ReadTimeout:  srv.readTimeout,
+				WriteTimeout: srv.writeTimeout,
+				TLSConfig:    t,
+			}
+		}
+	}
+
 	srv.Server = &http.Server{
 		Handler:      srv,
 		ReadTimeout:  srv.readTimeout,
 		WriteTimeout: srv.writeTimeout,
-		TLSConfig:    srv.tlsConf,
 	}
+
 	return srv
+}
+
+// Use uses a service middleware with selector.
+// selector:
+//   - '/*'
+//   - '/helloworld.v1.Greeter/*'
+//   - '/helloworld.v1.Greeter/SayHello'
+func (s *Server) Use(selector string, m ...middleware.Middleware) {
+	s.middleware.Add(selector, m...)
 }
 
 func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
@@ -74,8 +69,9 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 // Endpoint return a real address to registry endpoint.
 // examples:
-//   https://127.0.0.1:8000
-//   Legacy: http://127.0.0.1:8000?isSecure=false
+//
+//	https://127.0.0.1:8000
+//	Legacy: http://127.0.0.1:8000?isSecure=false
 func (s *Server) Endpoint() (*url.URL, error) {
 	if err := s.listenAndEndpoint(); err != nil {
 		return nil, err
@@ -91,11 +87,13 @@ func (s *Server) Start(ctx context.Context) error {
 	s.BaseContext = func(net.Listener) context.Context {
 		return ctx
 	}
-	log.Infof("[HTTP] server is listening on: %s", s.lis.Addr().String())
+
 	var err error
 	if s.tlsConf != nil {
-		err = s.ServeTLS(s.lis, "", "")
+		log.Infof("[HTTPS] server is listening on: %s", s.lis.Addr().String())
+		err = s.ServeTLS(s.lis, s.tlsConf.Cert, s.tlsConf.Key)
 	} else {
+		log.Infof("[HTTP] server is listening on: %s", s.lis.Addr().String())
 		err = s.Serve(s.lis)
 	}
 	if !errors.Is(err, http.ErrServerClosed) {
@@ -105,7 +103,7 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 // Stop stop the HTTP server.
-func (s *Server) Stop() error {
+func (s *Server) Stop(ctx context.Context) error {
 	log.Infof("[HTTP] server is stopping")
 	return s.Close()
 }

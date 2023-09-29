@@ -1,6 +1,6 @@
 module github.com/apus-run/gaia/plugins/registry/etcd
 
-go 1.18
+go 1.20
 
 require (
 	github.com/apus-run/gaia v1.8.0

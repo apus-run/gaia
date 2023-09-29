@@ -1,8 +1,6 @@
-package http
+package grpc
 
 import (
-	"context"
-	"net/http"
 	"reflect"
 	"testing"
 
@@ -29,30 +27,5 @@ func TestTransport_Operation(t *testing.T) {
 	o := &Transport{operation: v}
 	if !reflect.DeepEqual(v, o.Operation()) {
 		t.Errorf("expect %v, got %v", v, o.Operation())
-	}
-}
-
-func TestTransport_Request(t *testing.T) {
-	v := &http.Request{}
-	o := &Transport{request: v}
-	if !reflect.DeepEqual(v, o.Request()) {
-		t.Errorf("expect %v, got %v", v, o.Request())
-	}
-}
-
-func TestTransport_PathTemplate(t *testing.T) {
-	v := "template"
-	o := &Transport{pathTemplate: v}
-	if !reflect.DeepEqual(v, o.PathTemplate()) {
-		t.Errorf("expect %v, got %v", v, o.PathTemplate())
-	}
-}
-
-func TestSetOperation(t *testing.T) {
-	tr := &Transport{}
-	ctx := transport.NewServerContext(context.Background(), tr)
-	SetOperation(ctx, "gaia")
-	if !reflect.DeepEqual(tr.operation, "gaia") {
-		t.Errorf("expect %v, got %v", "gaia", tr.operation)
 	}
 }

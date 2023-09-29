@@ -7,15 +7,14 @@ import (
 	"os/signal"
 	"sync"
 
-	"github.com/google/uuid"
+	"github.com/apus-run/sea-kit/log"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/apus-run/gaia/log"
 	"github.com/apus-run/gaia/registry"
 	"github.com/apus-run/gaia/transport"
 )
 
-type App interface {
+type AppInfo interface {
 	ID() string
 	Name() string
 	Version() string
@@ -24,7 +23,7 @@ type App interface {
 }
 
 type Gaia struct {
-	opts     options
+	opts     *options
 	ctx      context.Context
 	cancel   func()
 	mu       sync.Mutex
@@ -33,14 +32,7 @@ type Gaia struct {
 
 // New create an application lifecycle manager.
 func New(opts ...Option) *Gaia {
-	o := defaultOptions()
-
-	if id, err := uuid.NewUUID(); err == nil {
-		o.id = id.String()
-	}
-	for _, opt := range opts {
-		opt(&o)
-	}
+	o := Apply(opts...)
 
 	if o.logger != nil {
 		log.SetLogger(o.logger)
@@ -85,18 +77,25 @@ func (a *Gaia) Run() error {
 	a.mu.Unlock()
 	eg, ctx := errgroup.WithContext(NewContext(a.ctx, a))
 	wg := sync.WaitGroup{}
+
+	for _, fn := range a.opts.beforeStart {
+		if err = fn(ctx); err != nil {
+			return err
+		}
+	}
+
 	for _, srv := range a.opts.servers {
 		srv := srv
 		eg.Go(func() error {
 			<-ctx.Done() // wait for stop signal
 			stopCtx, cancel := context.WithTimeout(NewContext(a.opts.ctx, a), a.opts.stopTimeout)
 			defer cancel()
-			return srv.GracefullyStop(stopCtx)
+			return srv.Stop(stopCtx)
 		})
 		wg.Add(1)
 		eg.Go(func() error {
 			wg.Done()
-			return srv.Start(NewContext(a.opts.ctx, a))
+			return srv.Start(ctx)
 		})
 	}
 	wg.Wait()
@@ -106,6 +105,12 @@ func (a *Gaia) Run() error {
 		c, cancel := context.WithTimeout(ctx, a.opts.registryTimeout)
 		defer cancel()
 		if err := a.opts.registry.Register(c, instance); err != nil {
+			return err
+		}
+	}
+
+	for _, fn := range a.opts.afterStart {
+		if err = fn(ctx); err != nil {
 			return err
 		}
 	}
@@ -128,7 +133,12 @@ func (a *Gaia) Run() error {
 }
 
 // Stop gracefully stops the application.
-func (a *Gaia) Stop() error {
+func (a *Gaia) Stop() (err error) {
+	ctx := NewContext(a.ctx, a)
+	for _, fn := range a.opts.beforeStop {
+		err = fn(ctx)
+	}
+
 	// deregister instance
 	a.mu.Lock()
 	instance := a.instance
@@ -145,7 +155,7 @@ func (a *Gaia) Stop() error {
 	if a.cancel != nil {
 		a.cancel()
 	}
-	return nil
+	return err
 }
 
 func (a *Gaia) buildInstance() (*registry.ServiceInstance, error) {
@@ -176,12 +186,12 @@ func (a *Gaia) buildInstance() (*registry.ServiceInstance, error) {
 type appKey struct{}
 
 // NewContext returns a new Context that carries value.
-func NewContext(ctx context.Context, s App) context.Context {
+func NewContext(ctx context.Context, s AppInfo) context.Context {
 	return context.WithValue(ctx, appKey{}, s)
 }
 
 // FromContext returns the Transport value stored in ctx, if any.
-func FromContext(ctx context.Context) (s App, ok bool) {
-	s, ok = ctx.Value(appKey{}).(App)
+func FromContext(ctx context.Context) (s AppInfo, ok bool) {
+	s, ok = ctx.Value(appKey{}).(AppInfo)
 	return
 }

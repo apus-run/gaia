@@ -1,13 +1,11 @@
 package http
 
 import (
-	"crypto/tls"
-	"log"
 	"net"
 	"reflect"
 	"testing"
 
-	xlog "github.com/apus-run/gaia/log"
+	"github.com/apus-run/gaia/internal/tls"
 	"github.com/apus-run/gaia/middleware"
 )
 
@@ -29,30 +27,22 @@ func TestAddress(t *testing.T) {
 	}
 }
 
-func TestLogger(t *testing.T) {
-	o := &Server{}
-	v := xlog.NewStdLogger(log.Writer())
-	Logger(v)(o)
-	if !reflect.DeepEqual(v, o.log) {
-		t.Fatalf("o.logger:%v is not equal to xlog.NewHelper(v):%v", o.log, xlog.NewHelper(v))
-	}
-}
-
 func TestMiddleware(t *testing.T) {
 	o := &Server{}
 	v := []middleware.Middleware{
 		func(middleware.Handler) middleware.Handler { return nil },
 	}
-	Middleware(v...)(o)
-	if !reflect.DeepEqual(v, o.ms) {
-		t.Errorf("expected %v got %v", v, o.ms)
+	o.middleware.Use(v...)
+
+	if !reflect.DeepEqual(v, o) {
+		t.Errorf("expected %v got %v", v, o)
 	}
 }
 
 func TestTLSConfig(t *testing.T) {
 	o := &Server{}
 	v := &tls.Config{}
-	TLSConfig(v)(o)
+
 	if !reflect.DeepEqual(v, o.tlsConf) {
 		t.Errorf("expected %v got %v", v, o.tlsConf)
 	}

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/apus-run/gaia/internal/endpoint"
-	"github.com/apus-run/gaia/log"
 	"github.com/apus-run/gaia/registry"
+	"github.com/apus-run/sea-kit/log"
 
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
@@ -21,8 +21,8 @@ type discoveryResolver struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	insecure         bool
-	debugLogDisabled bool
+	insecure bool
+	debugLog bool
 }
 
 func (r *discoveryResolver) watch() {
@@ -79,7 +79,7 @@ func (r *discoveryResolver) update(ins []*registry.ServiceInstance) {
 		log.Errorf("[resolver] failed to update state: %s", err)
 	}
 
-	if !r.debugLogDisabled {
+	if !r.debugLog {
 		b, _ := json.Marshal(ins)
 		log.Infof("[resolver] update instances: %s", b)
 	}
@@ -93,7 +93,7 @@ func (r *discoveryResolver) Close() {
 	}
 }
 
-func (r *discoveryResolver) ResolveNow(options resolver.ResolveNowOptions) {}
+func (r *discoveryResolver) ResolveNow(_ resolver.ResolveNowOptions) {}
 
 func parseAttributes(md map[string]string) *attributes.Attributes {
 	var a *attributes.Attributes
