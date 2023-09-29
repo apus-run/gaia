@@ -1,4 +1,4 @@
-package websocket
+package ws
 
 import (
 	"crypto/tls"
@@ -43,7 +43,7 @@ func ConnectHandle(h ConnectHandler) ServerOption {
 
 func Logger(logger log.Logger) ServerOption {
 	return func(s *Server) {
-		s.log = log.NewHelper(logger, log.WithMessageKey("websocket"))
+		s.log = log.NewHelper(logger, log.WithMessageKey("ws"))
 	}
 }
 

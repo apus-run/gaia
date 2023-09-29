@@ -1,4 +1,4 @@
-package websocket
+package ws
 
 import (
 	"bytes"
@@ -98,7 +98,7 @@ func NewServer(opts ...ServerOption) *Server {
 		address:     ":0",
 		timeout:     1 * time.Second,
 		strictSlash: true,
-		log:         log.NewHelper(log.GetLogger(), log.WithMessageKey("[websocket]")),
+		log:         log.NewHelper(log.GetLogger(), log.WithMessageKey("[ws]")),
 
 		messageHandlers: make(MessageHandlerMap),
 
@@ -121,7 +121,7 @@ func NewServer(opts ...ServerOption) *Server {
 }
 
 func (s *Server) Name() string {
-	return "websocket"
+	return "ws"
 }
 
 func (s *Server) init(opts ...ServerOption) {
