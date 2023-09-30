@@ -7,9 +7,9 @@ import (
 
 // Error 返回错误码和消息的结构体
 type Error struct {
-	code    int      `json:"code"`
-	msg     string   `json:"msg"`
-	details []string `json:"details"`
+	code    int
+	msg     string
+	details []string
 }
 
 var errorCodes = map[int]struct{}{}

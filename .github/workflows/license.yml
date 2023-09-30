@@ -1,0 +1,15 @@
+name: Check License Lines
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches:
+      - develop
+      - main
+      - dev
+jobs:
+  check-license-lines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Check License Lines
+        uses: kt3k/license_checker@v1.0.6

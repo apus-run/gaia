@@ -1,21 +1,21 @@
 package http
 
 import (
-	"github.com/apus-run/gaia/internal/matcher"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/apus-run/gaia/internal/tls"
+	"github.com/apus-run/gaia/internal/matcher"
 	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/pkg/tls"
 )
 
 // Server is an HTTP server wrapper.
 type Server struct {
 	*http.Server
 	lis          net.Listener
-	tlsConf      *tls.Config
+	tlsConf      *tls.TLS
 	network      string
 	address      string
 	readTimeout  time.Duration
@@ -92,7 +92,7 @@ func Listener(lis net.Listener) ServerOption {
 }
 
 // TLSConfig with TLS config.
-func TLSConfig(c *tls.Config) ServerOption {
+func TLSConfig(c *tls.TLS) ServerOption {
 	return func(o *Server) {
 		o.tlsConf = c
 	}

@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"github.com/apus-run/gaia/internal/testdata/helloworld"
 	"net/url"
 	"reflect"
 	"strings"
@@ -12,15 +11,17 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/apus-run/gaia/internal/matcher"
+	pb "github.com/apus-run/gaia/internal/testdata/helloworld"
 	"github.com/apus-run/gaia/middleware"
 )
 
 // server is used to implement helloworld.GreeterServer.
 type server struct {
-	helloworld.UnimplementedGreeterServer
+	pb.UnimplementedGreeterServer
 }
 
-func (s *server) SayHelloStream(streamServer helloworld.Greeter_SayHelloStreamServer) error {
+func (s *server) SayHelloStream(streamServer pb.Greeter_SayHelloStreamServer) error {
 	var cnt uint
 	for {
 		in, err := streamServer.Recv()
@@ -28,12 +29,12 @@ func (s *server) SayHelloStream(streamServer helloworld.Greeter_SayHelloStreamSe
 			return err
 		}
 		if in.Name == "error" {
-			panic(err)
+			panic(fmt.Sprintf("invalid argument %s", in.Name))
 		}
 		if in.Name == "panic" {
 			panic("server panic")
 		}
-		err = streamServer.Send(&helloworld.HelloReply{
+		err = streamServer.Send(&pb.HelloReply{
 			Message: fmt.Sprintf("hello %s", in.Name),
 		})
 		if err != nil {
@@ -47,14 +48,14 @@ func (s *server) SayHelloStream(streamServer helloworld.Greeter_SayHelloStreamSe
 }
 
 // SayHello implements helloworld.GreeterServer
-func (s *server) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*helloworld.HelloReply, error) {
+func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	if in.Name == "error" {
 		panic(fmt.Sprintf("invalid argument %s", in.Name))
 	}
 	if in.Name == "panic" {
 		panic("server panic")
 	}
-	return &helloworld.HelloReply{Message: fmt.Sprintf("Hello %+v", in.Name)}, nil
+	return &pb.HelloReply{Message: fmt.Sprintf("Hello %+v", in.Name)}, nil
 }
 
 type testKey struct{}
@@ -75,7 +76,7 @@ func TestServer(t *testing.T) {
 		}),
 		GrpcOptions(grpc.InitialConnWindowSize(0)),
 	)
-	helloworld.RegisterGreeterServer(srv, &server{})
+	pb.RegisterGreeterServer(srv, &server{})
 
 	if e, err := srv.Endpoint(); err != nil || e == nil || strings.HasSuffix(e.Host, ":0") {
 		t.Fatal(e, err)
@@ -89,7 +90,7 @@ func TestServer(t *testing.T) {
 	}()
 	time.Sleep(time.Second)
 	testClient(t, srv)
-	_ = srv.GracefullyStop(ctx)
+	_ = srv.Stop(ctx)
 }
 
 func testClient(t *testing.T, srv *Server) {
@@ -118,14 +119,14 @@ func testClient(t *testing.T, srv *Server) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	client := helloworld.NewGreeterClient(conn)
-	reply, err := client.SayHello(context.Background(), &helloworld.HelloRequest{Name: "kratos"})
+	client := pb.NewGreeterClient(conn)
+	reply, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: "gaia"})
 	t.Log(err)
 	if err != nil {
 		t.Errorf("failed to call: %v", err)
 	}
-	if !reflect.DeepEqual(reply.Message, "Hello kratos") {
-		t.Errorf("expect %s, got %s", "Hello kratos", reply.Message)
+	if !reflect.DeepEqual(reply.Message, "Hello gaia") {
+		t.Errorf("expect %s, got %s", "Hello gaia", reply.Message)
 	}
 
 	streamCli, err := client.SayHelloStream(context.Background())
@@ -136,7 +137,7 @@ func testClient(t *testing.T, srv *Server) {
 	defer func() {
 		_ = streamCli.CloseSend()
 	}()
-	err = streamCli.Send(&helloworld.HelloRequest{Name: "cc"})
+	err = streamCli.Send(&pb.HelloRequest{Name: "cc"})
 	if err != nil {
 		t.Error(err)
 		return
@@ -163,12 +164,15 @@ func TestServer_unaryServerInterceptor(t *testing.T) {
 	srv := &Server{
 		ctx:        context.Background(),
 		endpoint:   u,
-		middleware: []middleware.Middleware{EmptyMiddleware()},
+		timeout:    time.Duration(10),
+		middleware: matcher.New(),
 	}
+	srv.middleware.Use(EmptyMiddleware())
 	req := &struct{}{}
-	rv, err := srv.unaryServerInterceptor()(context.TODO(), req, &grpc.UnaryServerInfo{}, func(ctx context.Context, req interface{}) (i interface{}, e error) {
-		return &testResp{Data: "hi"}, nil
-	})
+	rv, err := srv.unaryServerInterceptor()(context.TODO(), req, &grpc.UnaryServerInfo{},
+		func(ctx context.Context, req interface{}) (i interface{}, e error) {
+			return &testResp{Data: "hi"}, nil
+		})
 	if err != nil {
 		t.Errorf("expect %v, got %v", nil, err)
 	}

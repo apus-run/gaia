@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apus-run/gaia/internal/tls"
 	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/pkg/tls"
 )
 
 func TestNetwork(t *testing.T) {
@@ -40,8 +40,10 @@ func TestMiddleware(t *testing.T) {
 }
 
 func TestTLSConfig(t *testing.T) {
-	o := &Server{}
-	v := &tls.Config{}
+	o := &Server{
+		tlsConf: &tls.TLS{},
+	}
+	v := &tls.TLS{}
 
 	if !reflect.DeepEqual(v, o.tlsConf) {
 		t.Errorf("expected %v got %v", v, o.tlsConf)

@@ -1,6 +1,6 @@
 package errcode
 
-//nolint: golint
+// nolint: golint
 var (
 	// 预定义错误
 	// Common errors

@@ -2,15 +2,16 @@ package grpc
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/apus-run/gaia/middleware"
-	"github.com/apus-run/gaia/registry"
 	"google.golang.org/grpc"
+
+	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/pkg/tls"
+	"github.com/apus-run/gaia/registry"
 )
 
 func TestNetwork(t *testing.T) {
@@ -50,7 +51,7 @@ func TestMiddleware(t *testing.T) {
 
 func TestTLSConfig(t *testing.T) {
 	o := &Server{}
-	v := &tls.Config{}
+	v := &tls.TLS{}
 	TLSConfig(v)(o)
 	if !reflect.DeepEqual(v, o.tlsConf) {
 		t.Errorf("expect %v, got %v", v, o.tlsConf)
@@ -155,7 +156,7 @@ func TestWithDiscovery(t *testing.T) {
 
 func TestWithTLSConfig(t *testing.T) {
 	o := &Client{}
-	v := &tls.Config{}
+	v := &tls.TLS{}
 	WithTLSConfig(v)(o)
 	if !reflect.DeepEqual(v, o.tlsConf) {
 		t.Errorf("expect %v but got %v", v, o.tlsConf)

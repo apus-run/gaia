@@ -29,7 +29,7 @@ type {{$.Name}} struct{
 }
 
 {{range .Methods}}
-func (s *{{$.Name}}) {{ .HandlerName }} (ctx *ginx.Context) {
+func (s *{{$.Name}}) {{ .HandlerName }}_HTTP_Handler (ctx *ginx.Context) {
 	var in {{.Request}}
 {{if .HasPathParams }}
 	if err := ctx.ShouldBindUri(&in); err != nil {
@@ -73,7 +73,7 @@ func (s *{{$.Name}}) {{ .HandlerName }} (ctx *ginx.Context) {
 
 func (s *{{$.Name}}) RegisterService() {
 {{- range .Methods}}
-		s.router.Handle("{{.Method}}", "{{.Path}}", ginx.Handle(s.{{ .HandlerName }}) )
+		s.router.Handle("{{.Method}}", "{{.Path}}", ginx.Handle(s.{{ .HandlerName }}_HTTP_Handler) )
 {{- end}}
 }
 `

@@ -10,15 +10,15 @@ import (
 	"google.golang.org/grpc/health"
 
 	"github.com/apus-run/gaia/internal/matcher"
-	"github.com/apus-run/gaia/internal/tls"
 	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/pkg/tls"
 )
 
 // Server is a gRPC server wrapper.
 type Server struct {
 	*grpc.Server
 	ctx               context.Context
-	tlsConf           *tls.Config
+	tlsConf           *tls.TLS
 	lis               net.Listener
 	err               error
 	network           string
@@ -86,7 +86,7 @@ func Middleware(m ...middleware.Middleware) ServerOption {
 }
 
 // TLSConfig with TLS config.
-func TLSConfig(c *tls.Config) ServerOption {
+func TLSConfig(c *tls.TLS) ServerOption {
 	return func(s *Server) {
 		s.tlsConf = c
 	}

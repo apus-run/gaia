@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	grpcInsecure "google.golang.org/grpc/credentials/insecure"
 
-	"github.com/apus-run/gaia/internal/tls"
 	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/pkg/tls"
 	"github.com/apus-run/gaia/registry"
 	"github.com/apus-run/gaia/transport/grpc/resolver/discovery"
 )
@@ -19,9 +19,8 @@ import (
 // Client is gRPC Client
 type Client struct {
 	endpoint               string
-	subsetSize             int
 	timeout                time.Duration
-	tlsConf                *tls.Config
+	tlsConf                *tls.TLS
 	discovery              registry.Discovery
 	ms                     []middleware.Middleware
 	ints                   []grpc.UnaryClientInterceptor
@@ -36,7 +35,6 @@ func defaultClient() *Client {
 	return &Client{
 		timeout:                2000 * time.Millisecond,
 		balancerName:           roundrobin.Name,
-		subsetSize:             25,
 		printDiscoveryDebugLog: true,
 	}
 }
@@ -48,14 +46,6 @@ type ClientOption func(o *Client)
 func WithEndpoint(endpoint string) ClientOption {
 	return func(c *Client) {
 		c.endpoint = endpoint
-	}
-}
-
-// WithSubset with client disocvery subset size.
-// zero value means subset filter disabled
-func WithSubset(size int) ClientOption {
-	return func(c *Client) {
-		c.subsetSize = size
 	}
 }
 
@@ -74,7 +64,7 @@ func WithMiddleware(ms ...middleware.Middleware) ClientOption {
 }
 
 // WithTLSConfig with TLS config.
-func WithTLSConfig(conf *tls.Config) ClientOption {
+func WithTLSConfig(conf *tls.TLS) ClientOption {
 	return func(c *Client) {
 		c.tlsConf = conf
 	}
@@ -161,7 +151,6 @@ func dial(ctx context.Context, insecure bool, opts ...ClientOption) (*grpc.Clien
 				discovery.NewBuilder(
 					options.discovery,
 					discovery.WithInsecure(insecure),
-					discovery.WithSubset(options.subsetSize),
 					discovery.PrintDebugLog(options.printDiscoveryDebugLog),
 				)))
 	}

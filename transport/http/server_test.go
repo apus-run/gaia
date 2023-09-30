@@ -49,7 +49,7 @@ func TestServer(t *testing.T) {
 		}
 	}()
 	time.Sleep(time.Second)
-	if srv.GracefullyStop(ctx) != nil {
-		t.Errorf("expected nil got %v", srv.GracefullyStop(ctx))
+	if srv.Stop(ctx) != nil {
+		t.Errorf("expected nil got %v", srv.Stop(ctx))
 	}
 }

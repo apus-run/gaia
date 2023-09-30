@@ -8,8 +8,8 @@ import (
 	"github.com/apus-run/sea-kit/log"
 )
 
-// Config is the configuration for TLS files
-type Config struct {
+// TLS is the configuration for TLS files
+type TLS struct {
 	// the CA file
 	CA string
 	// the cert file
@@ -22,7 +22,7 @@ type Config struct {
 }
 
 // Config return a tls.Config object
-func (t *Config) Config() (*tls.Config, error) {
+func (t *TLS) Config() (*tls.Config, error) {
 	if len(t.CA) <= 0 {
 		// the insecure is true but no ca/cert/key, then return a tls config
 		if t.Insecure == true {

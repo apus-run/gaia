@@ -6,6 +6,11 @@ GOBIN	:=	$(shell echo ${GOBIN} | cut -d':' -f1)
 GOPATH	:=	$(shell echo $(GOPATH) | cut -d':' -f1)
 BIN		:= 	""
 
+# Path Related
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_DIR := $(dir $(MKFILE_PATH))
+RELEASE_DIR := ${MKFILE_DIR}bin
+
 # golangci-lint
 LINTER := bin/golangci-lint
 
@@ -48,3 +53,33 @@ uninstall:
 	$(shell for i in `which -a protoc-gen-go-grpc | grep -v '/usr/bin/protoc-gen-go-gin' 2>/dev/null | sort | uniq`; do read -p "Press to remove $${i} (y/n): " REPLY; if [ $${REPLY} = "y" ]; then rm -f $${i}; fi; done)
 	$(shell for i in `which -a protoc-gen-validate | grep -v '/usr/bin/protoc-gen-go-gin' 2>/dev/null | sort | uniq`; do read -p "Press to remove $${i} (y/n): " REPLY; if [ $${REPLY} = "y" ]; then rm -f $${i}; fi; done)
 	@echo "uninstall finished"
+
+
+.PHONY:	setup
+setup:
+	@sh ./scripts/setup.sh
+
+.PHONY:	vet
+vet:
+	cd ${MKFILE_DIR} && go vet ./...
+	@echo "go vet finished"
+
+.PHONY:	fmt
+fmt:
+	@sh ./scripts/goimports.sh
+
+.PHONY:	lint
+lint:
+	@golangci-lint run -c .golangci.yml
+	@echo "go lint finished"
+
+.PHONY: tidy
+tidy:
+	@go mod tidy -v
+	@echo "go tidy finished"
+
+.PHONY: check
+check:
+	@$(MAKE) fmt
+	@$(MAKE) tidy
+	@echo "go check finished"

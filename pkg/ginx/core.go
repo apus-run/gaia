@@ -210,6 +210,22 @@ func (c *Context) GetRequestId() string {
 	return requestId.(string)
 }
 
+// healthCheckResponse 健康检查响应结构体
+type healthCheckResponse struct {
+	Status   string `json:"status"`
+	Hostname string `json:"hostname"`
+}
+
+// HealthCheck will return OK if the underlying BoltDB is healthy.
+// At least healthy enough for demoing purposes.
+func HealthCheck(c *gin.Context) {
+	name, err := os.Hostname()
+	if err != nil {
+		name = "unknown"
+	}
+	c.JSON(http.StatusOK, healthCheckResponse{Status: "UP", Hostname: name})
+}
+
 type ginKey struct{}
 
 // NewGinContext returns a new Context that carries gin.Context value.
@@ -243,20 +259,4 @@ func Middlewares(m ...middleware.Middleware) gin.HandlerFunc {
 		}
 		next(c.Request.Context(), c.Request)
 	}
-}
-
-// healthCheckResponse 健康检查响应结构体
-type healthCheckResponse struct {
-	Status   string `json:"status"`
-	Hostname string `json:"hostname"`
-}
-
-// HealthCheck will return OK if the underlying BoltDB is healthy.
-// At least healthy enough for demoing purposes.
-func HealthCheck(c *gin.Context) {
-	name, err := os.Hostname()
-	if err != nil {
-		name = "unknown"
-	}
-	c.JSON(http.StatusOK, healthCheckResponse{Status: "UP", Hostname: name})
 }

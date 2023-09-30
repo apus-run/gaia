@@ -4,7 +4,7 @@ package helloworld;
 
 import "google/api/annotations.proto";
 
-option go_package = "github.com/apus-run/gaia/testdata/helloworld";
+option go_package = "github.com/apus-run/gaia/internal/testdata/helloworld";
 
 // The greeting service definition.
 service Greeter {
