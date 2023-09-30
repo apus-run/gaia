@@ -1,14 +1,16 @@
 // Code generated protoc-gen-go-gin. DO NOT EDIT.
-// protoc-gen-go-gin v2.1.0
+// protoc-gen-go-gin v1.1.0
 
 package helloworld
 
 import (
 	context "context"
-	errcode "github.com/apus-run/gaia/pkg/errcode"
-	ginx "github.com/apus-run/gaia/pkg/ginx"
+
 	gin "github.com/gin-gonic/gin"
 	metadata "google.golang.org/grpc/metadata"
+
+	errcode "github.com/apus-run/gaia/pkg/errcode"
+	ginx "github.com/apus-run/gaia/pkg/ginx"
 )
 
 // This is a compile-time assertion to ensure that this generated file
