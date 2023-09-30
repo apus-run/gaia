@@ -8,7 +8,7 @@ import (
 	"github.com/apus-run/sea-kit/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/health/grpc_health_v1"
+	hapi "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/apus-run/gaia/internal/endpoint"
@@ -60,25 +60,15 @@ func NewServer(opts ...ServerOption) *Server {
 	srv.Server = grpc.NewServer(grpcOpts...)
 	// internal register
 	if !srv.customHealth {
-		grpc_health_v1.RegisterHealthServer(srv.Server, srv.health)
-	}
-
-	// listen and endpoint
-	srv.err = srv.listenAndEndpoint()
-
-	if !srv.customHealth {
-		// see https://github.com/grpc/grpc/blob/master/doc/health-checking.md
-		grpc_health_v1.RegisterHealthServer(srv.Server, srv.health)
+		hapi.RegisterHealthServer(srv.Server, srv.health)
 	}
 
 	// register reflection and the interface can be debugged through the grpcurl tool
 	// https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md#enable-server-reflection
 	// see https://github.com/fullstorydev/grpcurl
 	reflection.Register(srv.Server)
-
 	// admin register
 	srv.adminClean, _ = admin.Register(srv.Server)
-
 	return srv
 }
 

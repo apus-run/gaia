@@ -9,11 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/grpc"
-
 	"github.com/apus-run/gaia/internal/matcher"
 	pb "github.com/apus-run/gaia/internal/testdata/helloworld"
 	"github.com/apus-run/gaia/middleware"
+	"google.golang.org/grpc"
 )
 
 // server is used to implement helloworld.GreeterServer.

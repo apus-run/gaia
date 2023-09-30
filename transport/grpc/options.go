@@ -85,6 +85,13 @@ func Middleware(m ...middleware.Middleware) ServerOption {
 	}
 }
 
+// CustomHealth Checks server.
+func CustomHealth() ServerOption {
+	return func(s *Server) {
+		s.customHealth = true
+	}
+}
+
 // TLSConfig with TLS config.
 func TLSConfig(c *tls.TLS) ServerOption {
 	return func(s *Server) {
