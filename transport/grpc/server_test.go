@@ -9,10 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"github.com/apus-run/gaia/internal/matcher"
 	pb "github.com/apus-run/gaia/internal/testdata/helloworld"
 	"github.com/apus-run/gaia/middleware"
-	"google.golang.org/grpc"
+	"github.com/apus-run/gaia/transport"
 )
 
 // server is used to implement helloworld.GreeterServer.
@@ -21,6 +23,10 @@ type server struct {
 }
 
 func (s *server) SayHelloStream(streamServer pb.Greeter_SayHelloStreamServer) error {
+	tctx, ok := transport.FromServerContext(streamServer.Context())
+	if ok {
+		tctx.ReplyHeader().Set("123", "123")
+	}
 	var cnt uint
 	for {
 		in, err := streamServer.Recv()
@@ -47,7 +53,7 @@ func (s *server) SayHelloStream(streamServer pb.Greeter_SayHelloStreamServer) er
 }
 
 // SayHello implements helloworld.GreeterServer
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+func (s *server) SayHello(_ context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	if in.Name == "error" {
 		panic(fmt.Sprintf("invalid argument %s", in.Name))
 	}
@@ -66,7 +72,11 @@ func TestServer(t *testing.T) {
 		Middleware(
 			func(handler middleware.Handler) middleware.Handler {
 				return func(ctx context.Context, req interface{}) (reply interface{}, err error) {
-
+					if tr, ok := transport.FromServerContext(ctx); ok {
+						if tr.ReplyHeader() != nil {
+							tr.ReplyHeader().Set("req_id", "3344")
+						}
+					}
 					return handler(ctx, req)
 				}
 			}),
@@ -107,7 +117,10 @@ func testClient(t *testing.T, srv *Server) {
 			}),
 		WithMiddleware(func(handler middleware.Handler) middleware.Handler {
 			return func(ctx context.Context, req interface{}) (reply interface{}, err error) {
-
+				if tr, ok := transport.FromClientContext(ctx); ok {
+					header := tr.RequestHeader()
+					header.Set("x-md-trace", "2233")
+				}
 				return handler(ctx, req)
 			}
 		}),

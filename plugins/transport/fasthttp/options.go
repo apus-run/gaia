@@ -4,8 +4,7 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/go-kratos/kratos/v2/middleware"
-	kHttp "github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/apus-run/gaia/middleware"
 )
 
 type ServerOption func(*Server)
@@ -37,24 +36,6 @@ func WithMiddleware(m ...middleware.Middleware) ServerOption {
 func WithFilter(filters ...FilterFunc) ServerOption {
 	return func(o *Server) {
 		o.filters = filters
-	}
-}
-
-func WithRequestDecoder(dec kHttp.DecodeRequestFunc) ServerOption {
-	return func(o *Server) {
-		o.dec = dec
-	}
-}
-
-func WithResponseEncoder(en kHttp.EncodeResponseFunc) ServerOption {
-	return func(o *Server) {
-		o.enc = en
-	}
-}
-
-func WithErrorEncoder(en kHttp.EncodeErrorFunc) ServerOption {
-	return func(o *Server) {
-		o.ene = en
 	}
 }
 

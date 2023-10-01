@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	ic "github.com/apus-run/gaia/internal/context"
 	"github.com/apus-run/gaia/middleware"
@@ -30,12 +31,15 @@ func (w *wrappedStream) Context() context.Context {
 
 // unaryServerInterceptor is a gRPC unary server interceptor
 func (s *Server) unaryServerInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		ctx, cancel := ic.Merge(ctx, s.ctx)
 		defer cancel()
-
+		md, _ := metadata.FromIncomingContext(ctx)
+		replyHeader := metadata.MD{}
 		tr := &Transport{
-			operation: info.FullMethod,
+			operation:   info.FullMethod,
+			reqHeader:   headerCarrier(md),
+			replyHeader: headerCarrier(replyHeader),
 		}
 		if s.endpoint != nil {
 			tr.endpoint = s.endpoint.String()
@@ -47,7 +51,7 @@ func (s *Server) unaryServerInterceptor() grpc.UnaryServerInterceptor {
 			defer cancel()
 		}
 
-		h := func(ctx context.Context, req interface{}) (interface{}, error) {
+		h := func(ctx context.Context, req any) (any, error) {
 			return handler(ctx, req)
 		}
 		if next := s.middleware.Match(tr.Operation()); len(next) > 0 {
@@ -55,7 +59,9 @@ func (s *Server) unaryServerInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		reply, err := h(ctx, req)
-
+		if len(replyHeader) > 0 {
+			_ = grpc.SetHeader(ctx, replyHeader)
+		}
 		return reply, err
 	}
 }
@@ -65,26 +71,37 @@ func (s *Server) streamServerInterceptor() grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx, cancel := ic.Merge(ss.Context(), s.ctx)
 		defer cancel()
-
+		md, _ := metadata.FromIncomingContext(ctx)
+		replyHeader := metadata.MD{}
 		ctx = transport.NewServerContext(ctx, &Transport{
-			endpoint:  s.endpoint.String(),
-			operation: info.FullMethod,
+			endpoint:    s.endpoint.String(),
+			operation:   info.FullMethod,
+			reqHeader:   headerCarrier(md),
+			replyHeader: headerCarrier(replyHeader),
 		})
 
 		ws := NewWrappedStream(ctx, ss)
 
 		err := handler(srv, ws)
-
+		if len(replyHeader) > 0 {
+			_ = grpc.SetHeader(ctx, replyHeader)
+		}
 		return err
 	}
 }
 
 // unaryClientInterceptor client unary interceptor
 func (c *Client) unaryClientInterceptor(ms []middleware.Middleware, timeout time.Duration) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context,
+		method string,
+		req, reply any,
+		cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker,
+		opts ...grpc.CallOption) error {
 		ctx = transport.NewClientContext(ctx, &Transport{
 			endpoint:  cc.Target(),
 			operation: method,
+			reqHeader: headerCarrier{},
 		})
 
 		if timeout > 0 {
@@ -93,7 +110,16 @@ func (c *Client) unaryClientInterceptor(ms []middleware.Middleware, timeout time
 			defer cancel()
 		}
 
-		h := func(ctx context.Context, req interface{}) (interface{}, error) {
+		h := func(ctx context.Context, req any) (any, error) {
+			if tr, ok := transport.FromClientContext(ctx); ok {
+				header := tr.RequestHeader()
+				keys := header.Keys()
+				keyvals := make([]string, 0, len(keys))
+				for _, k := range keys {
+					keyvals = append(keyvals, k, header.Get(k))
+				}
+				ctx = metadata.AppendToOutgoingContext(ctx, keyvals...)
+			}
 			return reply, invoker(ctx, method, req, reply, cc, opts...)
 		}
 
@@ -108,9 +134,15 @@ func (c *Client) unaryClientInterceptor(ms []middleware.Middleware, timeout time
 }
 
 func (c *Client) streamClientInterceptor() grpc.StreamClientInterceptor {
-	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) { // nolint
+	return func(ctx context.Context,
+		desc *grpc.StreamDesc,
+		cc *grpc.ClientConn,
+		method string,
+		streamer grpc.Streamer,
+		opts ...grpc.CallOption) (grpc.ClientStream, error) { // nolint
 		ctx = transport.NewClientContext(ctx, &Transport{
 			endpoint:  cc.Target(),
+			reqHeader: headerCarrier{},
 			operation: method,
 		})
 

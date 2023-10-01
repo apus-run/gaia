@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apus-run/sea-kit/log"
 	hertz "github.com/cloudwego/hertz/pkg/app/server"
 
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/transport"
-	kHttp "github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/transport"
+	thttp "github.com/apus-run/gaia/transport/http"
 )
 
 var (
@@ -29,19 +29,13 @@ type Server struct {
 
 	err error
 
-	filters []kHttp.FilterFunc
+	filters []thttp.FilterFunc
 	ms      []middleware.Middleware
-	dec     kHttp.DecodeRequestFunc
-	enc     kHttp.EncodeResponseFunc
-	ene     kHttp.EncodeErrorFunc
 }
 
 func NewServer(opts ...ServerOption) *Server {
 	srv := &Server{
 		timeout: 1 * time.Second,
-		dec:     kHttp.DefaultRequestDecoder,
-		enc:     kHttp.DefaultResponseEncoder,
-		ene:     kHttp.DefaultErrorEncoder,
 	}
 
 	srv.init(opts...)
@@ -81,10 +75,10 @@ func (s *Server) Endpoint() (*url.URL, error) {
 func (s *Server) Start(ctx context.Context) error {
 	log.Infof("[hertz] server listening on: %s", s.addr)
 
-	return s.Hertz.Run()
+	return s.Run()
 }
 
 func (s *Server) Stop(ctx context.Context) error {
 	log.Info("[hertz] server stopping")
-	return s.Hertz.Shutdown(ctx)
+	return s.Shutdown(ctx)
 }

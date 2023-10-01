@@ -41,6 +41,24 @@ func TestTransport_Request(t *testing.T) {
 	}
 }
 
+func TestTransport_RequestHeader(t *testing.T) {
+	v := headerCarrier{}
+	v.Set("a", "1")
+	o := &Transport{reqHeader: v}
+	if !reflect.DeepEqual("1", o.RequestHeader().Get("a")) {
+		t.Errorf("expect %v, got %v", "1", o.RequestHeader().Get("a"))
+	}
+}
+
+func TestTransport_ReplyHeader(t *testing.T) {
+	v := headerCarrier{}
+	v.Set("a", "1")
+	o := &Transport{replyHeader: v}
+	if !reflect.DeepEqual("1", o.ReplyHeader().Get("a")) {
+		t.Errorf("expect %v, got %v", "1", o.ReplyHeader().Get("a"))
+	}
+}
+
 func TestTransport_PathTemplate(t *testing.T) {
 	v := "template"
 	o := &Transport{pathTemplate: v}

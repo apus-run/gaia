@@ -27,6 +27,16 @@ func (tr *mockTransport) Operation() string {
 	return tr.operation
 }
 
+// RequestHeader returns the request header.
+func (tr *mockTransport) RequestHeader() Header {
+	return nil
+}
+
+// ReplyHeader returns the reply header.
+func (tr *mockTransport) ReplyHeader() Header {
+	return nil
+}
+
 func TestServerTransport(t *testing.T) {
 	ctx := context.Background()
 

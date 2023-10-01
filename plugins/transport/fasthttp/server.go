@@ -3,6 +3,7 @@ package fasthttp
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,11 +12,9 @@ import (
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
 
-	"github.com/go-kratos/kratos/v2/errors"
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/transport"
-	kHttp "github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/transport"
+	"github.com/apus-run/sea-kit/log"
 )
 
 var (
@@ -34,9 +33,6 @@ type Server struct {
 
 	filters []FilterFunc
 	ms      []middleware.Middleware
-	dec     kHttp.DecodeRequestFunc
-	enc     kHttp.EncodeResponseFunc
-	ene     kHttp.EncodeErrorFunc
 
 	strictSlash bool
 	router      *router.Router
@@ -45,9 +41,6 @@ type Server struct {
 func NewServer(opts ...ServerOption) *Server {
 	srv := &Server{
 		timeout:     1 * time.Second,
-		dec:         kHttp.DefaultRequestDecoder,
-		enc:         kHttp.DefaultResponseEncoder,
-		ene:         kHttp.DefaultErrorEncoder,
 		strictSlash: true,
 		router:      router.New(),
 	}
