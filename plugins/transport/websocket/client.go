@@ -6,11 +6,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/go-kratos/kratos/v2/encoding"
-
+	"github.com/apus-run/sea-kit/encoding"
 	ws "github.com/gorilla/websocket"
-
-	"github.com/tx7do/kratos-transport/broker"
 )
 
 type ClientMessageHandler func(MessagePayload) error
@@ -123,7 +120,7 @@ func (c *Client) marshalMessage(messageType MessageType, message MessagePayload)
 	case PayloadTypeBinary:
 		var msg BinaryMessage
 		msg.Type = messageType
-		msg.Body, err = broker.Marshal(c.codec, message)
+		msg.Body, err = Marshal(c.codec, message)
 		if err != nil {
 			return nil, err
 		}
@@ -137,7 +134,7 @@ func (c *Client) marshalMessage(messageType MessageType, message MessagePayload)
 		var buf []byte
 		var msg TextMessage
 		msg.Type = messageType
-		buf, err = broker.Marshal(c.codec, message)
+		buf, err = Marshal(c.codec, message)
 		msg.Body = string(buf)
 		if err != nil {
 			return nil, err
@@ -257,7 +254,7 @@ func (c *Client) unmarshalMessage(buf []byte) (*ClientHandlerData, MessagePayloa
 			payload = msg.Body
 		}
 
-		if err := broker.Unmarshal(c.codec, msg.Body, &payload); err != nil {
+		if err := Unmarshal(c.codec, msg.Body, &payload); err != nil {
 			LogErrorf("unmarshal message exception: %s", err)
 			return nil, nil, err
 		}
@@ -283,7 +280,7 @@ func (c *Client) unmarshalMessage(buf []byte) (*ClientHandlerData, MessagePayloa
 			payload = msg.Body
 		}
 
-		if err := broker.Unmarshal(c.codec, []byte(msg.Body), &payload); err != nil {
+		if err := Unmarshal(c.codec, []byte(msg.Body), &payload); err != nil {
 			LogErrorf("unmarshal message exception: %s", err)
 			return nil, nil, err
 		}

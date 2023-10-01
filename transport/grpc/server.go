@@ -109,18 +109,8 @@ func (s *Server) Stop(ctx context.Context) error {
 		s.adminClean()
 	}
 	s.health.Shutdown()
-	s.Server.Stop()
+	s.GracefulStop()
 	log.Info("[gRPC] server stopping")
-	return nil
-}
-
-func (s *Server) GracefullyStop(ctx context.Context) error {
-	if s.adminClean != nil {
-		s.adminClean()
-	}
-	s.health.Shutdown()
-	s.Server.GracefulStop()
-	log.Info("[gRPC] server graceful stopping")
 	return nil
 }
 

@@ -105,11 +105,6 @@ func (s *Server) Start(ctx context.Context) error {
 // Stop stop the HTTP server.
 func (s *Server) Stop(ctx context.Context) error {
 	log.Infof("[HTTP] server is stopping")
-	return s.Close()
-}
-
-func (s *Server) GracefullyStop(ctx context.Context) error {
-	log.Infof("[HTTP] server is stopping")
 	return s.Shutdown(ctx)
 }
 

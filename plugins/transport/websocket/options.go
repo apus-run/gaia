@@ -3,9 +3,11 @@ package websocket
 import (
 	"crypto/tls"
 	"net"
+	"net/http"
 	"time"
 
-	"github.com/go-kratos/kratos/v2/encoding"
+	"github.com/apus-run/sea-kit/encoding"
+	ws "github.com/gorilla/websocket"
 )
 
 type PayloadType uint8
@@ -14,6 +16,58 @@ const (
 	PayloadTypeBinary = 0
 	PayloadTypeText   = 1
 )
+
+type Server struct {
+	*http.Server
+
+	lis      net.Listener
+	tlsConf  *tls.Config
+	upgrader *ws.Upgrader
+
+	network     string
+	address     string
+	path        string
+	strictSlash bool
+
+	timeout time.Duration
+
+	err   error
+	codec encoding.Codec
+
+	messageHandlers MessageHandlerMap
+
+	sessionMgr *SessionManager
+
+	register   chan *Session
+	unregister chan *Session
+
+	payloadType PayloadType
+}
+
+// defaultServer return a default config server
+func defaultServer() *Server {
+	return &Server{
+		network:     "tcp",
+		address:     ":0",
+		timeout:     1 * time.Second,
+		strictSlash: true,
+		path:        "/",
+
+		messageHandlers: make(MessageHandlerMap),
+
+		sessionMgr: NewSessionManager(),
+		upgrader: &ws.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin:     func(r *http.Request) bool { return true },
+		},
+
+		register:   make(chan *Session),
+		unregister: make(chan *Session),
+
+		payloadType: PayloadTypeBinary,
+	}
+}
 
 type ServerOption func(o *Server)
 

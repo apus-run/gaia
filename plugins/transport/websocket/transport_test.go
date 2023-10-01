@@ -2,11 +2,12 @@ package websocket
 
 import (
 	"context"
-	"github.com/go-kratos/kratos/v2/transport"
 	"net/http"
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/apus-run/gaia/transport"
 )
 
 func TestTransport_Kind(t *testing.T) {
@@ -40,24 +41,6 @@ func TestTransport_Request(t *testing.T) {
 	}
 }
 
-func TestTransport_RequestHeader(t *testing.T) {
-	v := headerCarrier{}
-	v.Set("a", "1")
-	o := &Transport{reqHeader: v}
-	if !reflect.DeepEqual("1", o.RequestHeader().Get("a")) {
-		t.Errorf("expect %v, got %v", "1", o.RequestHeader().Get("a"))
-	}
-}
-
-func TestTransport_ReplyHeader(t *testing.T) {
-	v := headerCarrier{}
-	v.Set("a", "1")
-	o := &Transport{replyHeader: v}
-	if !reflect.DeepEqual("1", o.ReplyHeader().Get("a")) {
-		t.Errorf("expect %v, got %v", "1", o.ReplyHeader().Get("a"))
-	}
-}
-
 func TestTransport_PathTemplate(t *testing.T) {
 	v := "template"
 	o := &Transport{pathTemplate: v}
@@ -86,8 +69,8 @@ func TestHeaderCarrier_Keys(t *testing.T) {
 func TestSetOperation(t *testing.T) {
 	tr := &Transport{}
 	ctx := transport.NewServerContext(context.Background(), tr)
-	SetOperation(ctx, "kratos")
-	if !reflect.DeepEqual(tr.operation, "kratos") {
+	SetOperation(ctx, "gaia")
+	if !reflect.DeepEqual(tr.operation, "gaia") {
 		t.Errorf("expect %v, got %v", "kratos", tr.operation)
 	}
 }

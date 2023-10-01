@@ -2,21 +2,14 @@ package websocket
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
-	"github.com/go-kratos/kratos/v2/encoding"
-	"github.com/go-kratos/kratos/v2/transport"
-
-	ws "github.com/gorilla/websocket"
-
-	"github.com/tx7do/kratos-transport/broker"
+	"github.com/apus-run/gaia/transport"
 )
 
 type Binder func() Any
@@ -36,57 +29,18 @@ var (
 	_ transport.Endpointer = (*Server)(nil)
 )
 
-type Server struct {
-	*http.Server
-
-	lis      net.Listener
-	tlsConf  *tls.Config
-	upgrader *ws.Upgrader
-
-	network     string
-	address     string
-	path        string
-	strictSlash bool
-
-	timeout time.Duration
-
-	err   error
-	codec encoding.Codec
-
-	messageHandlers MessageHandlerMap
-
-	sessionMgr *SessionManager
-
-	register   chan *Session
-	unregister chan *Session
-
-	payloadType PayloadType
-}
-
 func NewServer(opts ...ServerOption) *Server {
-	srv := &Server{
-		network:     "tcp",
-		address:     ":0",
-		timeout:     1 * time.Second,
-		strictSlash: true,
-		path:        "/",
-
-		messageHandlers: make(MessageHandlerMap),
-
-		sessionMgr: NewSessionManager(),
-		upgrader: &ws.Upgrader{
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
-			CheckOrigin:     func(r *http.Request) bool { return true },
-		},
-
-		register:   make(chan *Session),
-		unregister: make(chan *Session),
-
-		payloadType: PayloadTypeBinary,
+	srv := defaultServer()
+	// apply options
+	for _, o := range opts {
+		o(srv)
 	}
 
-	srv.init(opts...)
+	srv.Server = &http.Server{
+		TLSConfig: srv.tlsConf,
+	}
+
+	http.HandleFunc(srv.path, srv.wsHandler)
 
 	srv.err = srv.listen()
 
@@ -95,18 +49,6 @@ func NewServer(opts ...ServerOption) *Server {
 
 func (s *Server) Name() string {
 	return string(KindWebsocket)
-}
-
-func (s *Server) init(opts ...ServerOption) {
-	for _, o := range opts {
-		o(s)
-	}
-
-	s.Server = &http.Server{
-		TLSConfig: s.tlsConf,
-	}
-
-	http.HandleFunc(s.path, s.wsHandler)
 }
 
 func (s *Server) SessionCount() int {
@@ -153,7 +95,7 @@ func (s *Server) marshalMessage(messageType MessageType, message MessagePayload)
 	case PayloadTypeBinary:
 		var msg BinaryMessage
 		msg.Type = messageType
-		msg.Body, err = broker.Marshal(s.codec, message)
+		msg.Body, err = Marshal(s.codec, message)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +109,7 @@ func (s *Server) marshalMessage(messageType MessageType, message MessagePayload)
 		var buf []byte
 		var msg TextMessage
 		msg.Type = messageType
-		buf, err = broker.Marshal(s.codec, message)
+		buf, err = Marshal(s.codec, message)
 		msg.Body = string(buf)
 		if err != nil {
 			return nil, err
@@ -252,7 +194,7 @@ func (s *Server) unmarshalMessage(buf []byte) (*HandlerData, MessagePayload, err
 			payload = msg.Body
 		}
 
-		if err := broker.Unmarshal(s.codec, msg.Body, &payload); err != nil {
+		if err := Unmarshal(s.codec, msg.Body, &payload); err != nil {
 			LogErrorf("unmarshal message exception: %s", err)
 			return nil, nil, err
 		}
@@ -278,7 +220,7 @@ func (s *Server) unmarshalMessage(buf []byte) (*HandlerData, MessagePayload, err
 			payload = msg.Body
 		}
 
-		if err := broker.Unmarshal(s.codec, []byte(msg.Body), &payload); err != nil {
+		if err := Unmarshal(s.codec, []byte(msg.Body), &payload); err != nil {
 			LogErrorf("unmarshal message exception: %s", err)
 			return nil, nil, err
 		}

@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"bou.ke/monkey"
 	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"bou.ke/monkey"
 
 	"github.com/stretchr/testify/assert"
 )

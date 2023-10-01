@@ -9,7 +9,6 @@ import (
 type Server interface {
 	Start(context.Context) error
 	Stop(context.Context) error
-	GracefullyStop(ctx context.Context) error
 }
 
 // Endpointer is registry endpoint.

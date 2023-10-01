@@ -2,13 +2,13 @@ package grpc
 
 import (
 	"context"
-	"github.com/apus-run/gaia/transport"
 	"time"
 
 	"google.golang.org/grpc"
 
 	ic "github.com/apus-run/gaia/internal/context"
 	"github.com/apus-run/gaia/middleware"
+	"github.com/apus-run/gaia/transport"
 )
 
 // wrappedStream is rewrite grpc stream's context
