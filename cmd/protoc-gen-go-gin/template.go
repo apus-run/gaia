@@ -8,75 +8,8 @@ import (
 	"strings"
 )
 
-var httpTemplate = `
-
-type {{ $.InterfaceName }} interface {
-{{- range .MethodSet}}
-	{{.Name}}(context.Context, *{{.Request}}) (*{{.Reply}}, error)
-{{- end}}
-}
-func Register{{ $.InterfaceName }}(r gin.IRouter, srv {{ $.InterfaceName }}) {
-	s := &{{.Name}}{
-		server: srv,
-		router: r,
-	}
-	s.RegisterService()
-}
-
-type {{$.Name}} struct{
-	server {{ $.InterfaceName }}
-	router gin.IRouter
-}
-
-{{range .Methods}}
-func (s *{{$.Name}}) {{ .HandlerName }}_HTTP_Handler (ctx *ginx.Context) {
-	var in {{.Request}}
-{{if .HasPathParams }}
-	if err := ctx.ShouldBindUri(&in); err != nil {
-		e := errcode.ErrInvalidParam.WithDetails(err.Error())
-		ctx.Error(e)
-		return
-	}
-{{else if eq .Method "GET" }}
-	if err := ctx.ShouldBindQuery(&in); err != nil {
-        e := errcode.ErrInvalidParam.WithDetails(err.Error())
-		ctx.Error(e)
-		return
-	}
-{{else if eq .Method "POST" "PUT" "PATCH" "DELETE"}}
-	if err := ctx.ShouldBindJSON(&in); err != nil {
-        e := errcode.ErrInvalidParam.WithDetails(err.Error())
-		ctx.Error(e)
-		return
-	}
-{{else}}
-	if err := ctx.ShouldBind(&in); err != nil {
-        e := errcode.ErrInvalidParam.WithDetails(err.Error())
-		ctx.Error(e)
-		return
-	}
-{{end}}
-	md := metadata.New(nil)
-	for k, v := range ctx.Request.Header {
-		md.Set(k, v...)
-	}
-	newCtx := metadata.NewIncomingContext(ctx, md)
-	out, err := s.server.({{ $.InterfaceName }}).{{.Name}}(newCtx, &in)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.Success(out)
-}
-{{end}}
-
-func (s *{{$.Name}}) RegisterService() {
-{{- range .Methods}}
-		s.router.Handle("{{.Method}}", "{{.Path}}", ginx.Handle(s.{{ .HandlerName }}_HTTP_Handler) )
-{{- end}}
-}
-`
+//go:embed httpTemplate.tpl
+var httpTemplate string
 
 type service struct {
 	Name     string // Greeter
@@ -88,12 +21,9 @@ type service struct {
 }
 
 func (s *service) execute() string {
-	if s.MethodSet == nil {
-		s.MethodSet = map[string]*method{}
-		for _, m := range s.Methods {
-			m := m
-			s.MethodSet[m.Name] = m
-		}
+	s.MethodSet = make(map[string]*method)
+	for _, m := range s.Methods {
+		s.MethodSet[m.Name] = m
 	}
 	buf := new(bytes.Buffer)
 	tmpl, err := template.New("http").Parse(strings.TrimSpace(httpTemplate))
@@ -103,7 +33,7 @@ func (s *service) execute() string {
 	if err := tmpl.Execute(buf, s); err != nil {
 		panic(err)
 	}
-	return buf.String()
+	return strings.Trim(buf.String(), "\r\n")
 }
 
 // InterfaceName service interface name

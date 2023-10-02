@@ -15,6 +15,12 @@ service Greeter {
     };
   }
   // Sends a greeting
+  rpc SayHelloPost (HelloRequest) returns (HelloReply)  {
+    option (google.api.http) = {
+      post: "/hello",
+    };
+  }
+  // Sends a greeting
   rpc SayHelloStream (stream HelloRequest) returns (stream HelloReply);
 }
 

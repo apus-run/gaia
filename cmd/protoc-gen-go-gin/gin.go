@@ -24,8 +24,8 @@ const (
 var methodSets = make(map[string]int)
 
 // generateFile generates a _gin.pb.go file.
-func generateFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
-	if len(file.Services) == 0 {
+func generateFile(gen *protogen.Plugin, file *protogen.File, omitempty bool, omitemptyPrefix string) *protogen.GeneratedFile {
+	if len(file.Services) == 0 || (omitempty && !hasHTTPRule(file.Services)) {
 		return nil
 	}
 	filename := file.GeneratedFilenamePrefix + "_gin.pb.go"
@@ -43,13 +43,28 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) *protogen.Generated
 	g.P("// ", ginPackage.Ident(""), ginxPackage.Ident(""), errCodePackage.Ident(""))
 	g.P()
 
-	for _, service := range file.Services {
-		genService(gen, file, g, service)
-	}
+	generateFileContent(gen, file, g, omitempty, omitemptyPrefix)
 	return g
 }
 
-func genService(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, s *protogen.Service) {
+// generateFileContent generates the gaia errors definitions, excluding the package statement.
+func generateFileContent(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, omitempty bool, omitemptyPrefix string) {
+	if len(file.Services) == 0 {
+		return
+	}
+	for _, service := range file.Services {
+		genService(gen, file, g, service, omitempty, omitemptyPrefix)
+	}
+}
+
+func genService(
+	_ *protogen.Plugin,
+	file *protogen.File,
+	g *protogen.GeneratedFile,
+	s *protogen.Service,
+	omitempty bool,
+	omitemptyPrefix string,
+) {
 	if s.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
 		g.P("//")
 		g.P(deprecationComment)
@@ -62,72 +77,48 @@ func genService(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 	}
 
 	for _, method := range s.Methods {
-		sd.Methods = append(sd.Methods, genMethod(method)...)
+		if method.Desc.IsStreamingClient() || method.Desc.IsStreamingServer() {
+			continue
+		}
+		// 存在 http rule 配置
+		rule, ok := proto.GetExtension(method.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
+		if rule != nil && ok {
+			for _, bind := range rule.AdditionalBindings {
+				sd.Methods = append(sd.Methods, buildHTTPRule(g, s, method, bind, omitemptyPrefix))
+			}
+			sd.Methods = append(sd.Methods, buildHTTPRule(g, s, method, rule, omitemptyPrefix))
+		} else if !omitempty {
+			path := fmt.Sprintf("/%s/%s", s.Desc.FullName(), method.Desc.Name())
+			sd.Methods = append(sd.Methods, buildMethodDesc(g, method, http.MethodPost, path))
+		}
 	}
 	if len(sd.Methods) != 0 {
 		g.P(sd.execute())
 	}
 }
 
-func genMethod(m *protogen.Method) []*method {
-	var methods []*method
-
-	// 存在 http rule 配置
-	rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
-	if rule != nil && ok {
-		for _, bind := range rule.AdditionalBindings {
-			methods = append(methods, buildHTTPRule(m, bind))
+func hasHTTPRule(services []*protogen.Service) bool {
+	for _, service := range services {
+		for _, method := range service.Methods {
+			if method.Desc.IsStreamingClient() || method.Desc.IsStreamingServer() {
+				continue
+			}
+			rule, ok := proto.GetExtension(method.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
+			if rule != nil && ok {
+				return true
+			}
 		}
-		methods = append(methods, buildHTTPRule(m, rule))
-		return methods
 	}
-
-	// 不存在走默认流程
-	methods = append(methods, defaultMethod(m))
-	return methods
+	return false
 }
 
-// defaultMethodPath 根据函数名生成 http 路由
-// 例如: GetBlogArticles ==> get: /blog/articles
-// 如果方法名首个单词不是 http method 映射，那么默认返回 POST
-func defaultMethod(m *protogen.Method) *method {
-	names := strings.Split(toSnakeCase(m.GoName), "_")
-	var (
-		paths      []string
-		httpMethod string
-		path       string
-	)
-
-	switch strings.ToUpper(names[0]) {
-	case http.MethodGet, "FIND", "QUERY", "LIST", "SEARCH":
-		httpMethod = http.MethodGet
-	case http.MethodPost, "CREATE":
-		httpMethod = http.MethodPost
-	case http.MethodPut, "UPDATE":
-		httpMethod = http.MethodPut
-	case http.MethodPatch:
-		httpMethod = http.MethodPatch
-	case http.MethodDelete:
-		httpMethod = http.MethodDelete
-	default:
-		httpMethod = "POST"
-		paths = names
-	}
-
-	if len(paths) > 0 {
-		path = strings.Join(paths, "/")
-	}
-
-	if len(names) > 1 {
-		path = strings.Join(names[1:], "/")
-	}
-
-	md := buildMethodDesc(m, httpMethod, path)
-	md.Body = "*"
-	return md
-}
-
-func buildHTTPRule(m *protogen.Method, rule *annotations.HttpRule) *method {
+func buildHTTPRule(
+	g *protogen.GeneratedFile,
+	service *protogen.Service,
+	m *protogen.Method,
+	rule *annotations.HttpRule,
+	omitemptyPrefix string,
+) *method {
 	var (
 		path   string
 		method string
@@ -135,28 +126,34 @@ func buildHTTPRule(m *protogen.Method, rule *annotations.HttpRule) *method {
 	switch pattern := rule.Pattern.(type) {
 	case *annotations.HttpRule_Get:
 		path = pattern.Get
-		method = "GET"
+		method = http.MethodGet
 	case *annotations.HttpRule_Put:
 		path = pattern.Put
-		method = "PUT"
+		method = http.MethodPut
 	case *annotations.HttpRule_Post:
 		path = pattern.Post
-		method = "POST"
+		method = http.MethodPost
 	case *annotations.HttpRule_Delete:
 		path = pattern.Delete
-		method = "DELETE"
+		method = http.MethodDelete
 	case *annotations.HttpRule_Patch:
 		path = pattern.Patch
-		method = "PATCH"
+		method = http.MethodPatch
 	case *annotations.HttpRule_Custom:
 		path = pattern.Custom.Path
 		method = pattern.Custom.Kind
 	}
-	md := buildMethodDesc(m, method, path)
+	if method == "" {
+		method = http.MethodPost
+	}
+	if path == "" {
+		path = fmt.Sprintf("%s/%s/%s", omitemptyPrefix, service.Desc.FullName(), m.Desc.Name())
+	}
+	md := buildMethodDesc(g, m, method, path)
 	return md
 }
 
-func buildMethodDesc(m *protogen.Method, httpMethod, path string) *method {
+func buildMethodDesc(_ *protogen.GeneratedFile, m *protogen.Method, httpMethod, path string) *method {
 	defer func() { methodSets[m.GoName]++ }()
 	md := &method{
 		Name:    m.GoName,

@@ -1,16 +1,14 @@
 // Code generated protoc-gen-go-gin. DO NOT EDIT.
-// protoc-gen-go-gin v1.1.0
+// protoc-gen-go-gin v1.10.1
 
 package helloworld
 
 import (
 	context "context"
-
-	gin "github.com/gin-gonic/gin"
-	metadata "google.golang.org/grpc/metadata"
-
 	errcode "github.com/apus-run/gaia/pkg/errcode"
 	ginx "github.com/apus-run/gaia/pkg/ginx"
+	gin "github.com/gin-gonic/gin"
+	metadata "google.golang.org/grpc/metadata"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,7 +20,7 @@ import (
 
 type GreeterHTTPServer interface {
 	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
-	SayHelloStream(context.Context, *HelloRequest) (*HelloReply, error)
+	SayHelloPost(context.Context, *HelloRequest) (*HelloReply, error)
 }
 
 func RegisterGreeterHTTPServer(r gin.IRouter, srv GreeterHTTPServer) {
@@ -61,7 +59,7 @@ func (s *Greeter) SayHello_0_HTTP_Handler(ctx *ginx.Context) {
 	ctx.Success(out)
 }
 
-func (s *Greeter) SayHelloStream_0_HTTP_Handler(ctx *ginx.Context) {
+func (s *Greeter) SayHelloPost_0_HTTP_Handler(ctx *ginx.Context) {
 	var in HelloRequest
 
 	if err := ctx.ShouldBindJSON(&in); err != nil {
@@ -75,7 +73,7 @@ func (s *Greeter) SayHelloStream_0_HTTP_Handler(ctx *ginx.Context) {
 		md.Set(k, v...)
 	}
 	newCtx := metadata.NewIncomingContext(ctx, md)
-	out, err := s.server.(GreeterHTTPServer).SayHelloStream(newCtx, &in)
+	out, err := s.server.(GreeterHTTPServer).SayHelloPost(newCtx, &in)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -86,5 +84,5 @@ func (s *Greeter) SayHelloStream_0_HTTP_Handler(ctx *ginx.Context) {
 
 func (s *Greeter) RegisterService() {
 	s.router.Handle("GET", "/hello/:name", ginx.Handle(s.SayHello_0_HTTP_Handler))
-	s.router.Handle("POST", "hello/stream", ginx.Handle(s.SayHelloStream_0_HTTP_Handler))
+	s.router.Handle("POST", "/hello", ginx.Handle(s.SayHelloPost_0_HTTP_Handler))
 }
