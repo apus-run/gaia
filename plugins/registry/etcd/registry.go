@@ -212,7 +212,20 @@ func (r *Registry) heartBeat(ctx context.Context, leaseID clientv3.LeaseID, key 
 	}
 }
 
+// GetServiceList 获取全部服务列表
 func (r *Registry) GetServiceList(ctx context.Context) ([]*registry.ServiceInstance, error) {
-	//TODO implement me
-	panic("implement me")
+	prefix := r.opts.namespace
+	resp, err := r.kv.Get(ctx, prefix, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*registry.ServiceInstance, 0, len(resp.Kvs))
+	for _, kv := range resp.Kvs {
+		si, err := unmarshal(kv.Value)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, si)
+	}
+	return items, nil
 }

@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/apus-run/gaia v1.8.0
+	github.com/apus-run/sea-kit/log v0.0.0-20230929051753-6f988327bc8a
 	github.com/hashicorp/consul/api v1.13.1
 )
 
@@ -17,11 +18,10 @@ require (
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/hashicorp/serf v0.9.6 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/sys v0.8.0 // indirect
 )
-
 
 replace github.com/apus-run/gaia => ../../../
