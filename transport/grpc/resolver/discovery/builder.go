@@ -13,6 +13,8 @@ import (
 
 const name = "discovery"
 
+var ErrWatcherCreateTimeout = errors.New("discovery create watcher overtime")
+
 // Option is builder option.
 type Option func(o *builder)
 
@@ -85,7 +87,7 @@ func (b *builder) Build(target resolver.Target, cc resolver.ClientConn, opts res
 	case <-done:
 		err = watchRes.err
 	case <-time.After(b.timeout):
-		err = errors.New("discovery create watcher overtime")
+		err = ErrWatcherCreateTimeout
 	}
 	if err != nil {
 		cancel()
